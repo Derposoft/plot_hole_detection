@@ -77,9 +77,9 @@ def write_synthetic_datapoint_to_file(X, y, path, plot_hole_type):
     :returns: None. file will be written at path. first line will be "plot_hole_type y", and
     rest of the lines will be X.
     """
-    with open(path, "w") as synthetic_document_f:
+    with open(path, "w", encoding="utf-8") as synthetic_document_f:
         synthetic_document_f.write(f"{plot_hole_type} {y}\n")
-        synthetic_document_f.write(X)
+        synthetic_document_f.write(X[1:])
 
 
 if __name__ == "__main__":
@@ -91,7 +91,7 @@ if __name__ == "__main__":
             X_continuity, y_continuity = generate_continuity_errors(document, n)
             X_unresolved, y_unresolved = generate_unresolvedstory_errors(document, n)
             for i in range(n):
-                doc_name = str(doc_path).split("/")[-1].split(".")[0]
+                doc_name = str(doc_path).split("\\")[-1].split(".")[0]
                 continuity_path = f"data/synthetic/synthetic_{doc_name}_continuity{i}.txt"
                 unresolved_path = f"data/synthetic/synthetic_{doc_name}_unresolved{i}.txt"
                 X, y = X_continuity[i], y_continuity[i]
