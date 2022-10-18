@@ -24,7 +24,7 @@ def generate_continuity_errors(document: str, n: int) -> Tuple[List[str], List[i
     :param n: number of samples to generate.
     :returns: (X, y) tuple for X=list of synthetic documents, y=list of labels
     """
-    sentences = document.split(".")
+    sentences =  [x.strip() for x in document.split(".") if x != ""]
     samples = np.random.choice(range(len(sentences)), n, replace=False)
     X = []
     negate = {"was", "is", "are", "am"}
@@ -40,7 +40,7 @@ def generate_continuity_errors(document: str, n: int) -> Tuple[List[str], List[i
             else:
                 synthetic_sentence.append(word)
         X[-1][sample] = " ".join(synthetic_sentence)
-    X = [" ".join(x) for x in X]
+    X = [".\n".join(x) for x in X]
     y = samples
     return X, y
 
@@ -54,7 +54,7 @@ def generate_unresolvedstory_errors(document: str, n: int, p:float=0.1) -> Tuple
     """ 
     X = []
     # Preprocessing - remove new line character and empty lines
-    sentences = document.split(".")
+    sentences = [x.strip() for x in document.split(".") if x != ""]
     n_sentences = len(sentences)
     
     # Given number of lines will be random #See below 0 to 20% of Number of Sentences
@@ -62,7 +62,7 @@ def generate_unresolvedstory_errors(document: str, n: int, p:float=0.1) -> Tuple
 
     # Create n text with n lines from the last removed   
     for sample in samples:
-        X.append(" ".join(sentences[:-sample]))
+        X.append(".\n".join(sentences[:-sample]))
     y = samples / n_sentences
     return X, y
 
@@ -80,6 +80,7 @@ def write_synthetic_datapoint_to_file(X, y, path, plot_hole_type):
     with open(path, "w", encoding="utf-8") as synthetic_document_f:
         synthetic_document_f.write(f"{plot_hole_type} {y}\n")
         synthetic_document_f.write(X[1:])
+        #exit()
 
 
 if __name__ == "__main__":
@@ -88,6 +89,7 @@ if __name__ == "__main__":
     for doc_path in dataset:
         with open(doc_path, "r", encoding="utf8") as document_f:
             document = " ".join([x.strip() for x in document_f.readlines()])
+            #print(document)
             X_continuity, y_continuity = generate_continuity_errors(document, n)
             X_unresolved, y_unresolved = generate_unresolvedstory_errors(document, n)
             for i in range(n):
