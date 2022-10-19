@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Tuple
 import numpy as np
+import nltk
 from copy import deepcopy
 #from negation_conversion import applyNegation
 ROOT = Path(__file__)
@@ -16,6 +17,47 @@ def get_datafiles() -> list:
     """
     return [x for x in Path(ROOT.parent / "raw").iterdir() if is_txt(x)]
 
+def negater(sentence: str) -> list:
+    """
+    Basic logic
+    1. Check if the word is a verb using nltk tagger
+    2. If the word is verb, look for antonyms
+    3. If antonym exist get a random antonym and put it in the word's place
+    4. If antonym does not exist, put "not" in front of the word if that's not a corpula, if the word is a corpula put "not" after the word.
+    """
+
+    wordnet = nltk.corpus.wordnet
+    corpula = {"was", "is", "are", "am"}
+    
+    tgt = sentence.split(" ")
+    tags = nltk.pos_tag(tgt) 
+    res = list()
+
+    for word, tag in zip(tgt, tags):
+        if tag[1][0] == "V": #If going to negate past-tense verbs only, change it to VBD, VBN
+            antonyms = list()    
+
+            for syn in wordnet.synsets(word):
+                for l in syn.lemmas():
+                    cands = l.antonyms()
+                    if cands:
+                        antonyms.append(cands[0].name())
+            
+            antonyms = list(set(antonyms))
+
+            #Case 3
+            if len(antonyms) > 0:
+                res.append(np.random.choice(antonyms, 1, replace=False)[0])
+            #Case 4
+            else:
+                if word not in corpula:
+                    res.append(f"not {word}")
+                else:
+                    res.append(f"{word} not")
+        else:
+            res.append(word)
+    print(" ".join(res))
+    return " ".join(res)
 
 def generate_continuity_errors(document: str, n: int) -> Tuple[List[str], List[int]]:
     """
@@ -27,10 +69,15 @@ def generate_continuity_errors(document: str, n: int) -> Tuple[List[str], List[i
     sentences =  [x.strip() for x in document.split(".") if x != ""]
     samples = np.random.choice(range(len(sentences)), n, replace=False)
     X = []
-    negate = {"was", "is", "are", "am"}
+
     for sample in samples:
         X.append(deepcopy(sentences))
+        
         #X[-1][sample] = "".join([word if word not in negate or not word.endswith("ed") else word + " not " for word in X[-1][sample]])
+        X[-1][sample] = negater(X[-1][sample])
+
+        """
+        negate = {"was", "is", "are", "am"}            
         synthetic_sentence = []
         for word in X[-1][sample].split(" "):
             if word.endswith("ed"):
@@ -40,6 +87,7 @@ def generate_continuity_errors(document: str, n: int) -> Tuple[List[str], List[i
             else:
                 synthetic_sentence.append(word)
         X[-1][sample] = " ".join(synthetic_sentence)
+        """
     X = [".\n".join(x) for x in X]
     y = samples
     return X, y
