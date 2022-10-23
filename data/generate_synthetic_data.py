@@ -1,9 +1,11 @@
-from pathlib import Path
-from typing import List, Tuple
-import numpy as np
-import nltk
 from copy import deepcopy
-#from negation_conversion import applyNegation
+import nltk
+import numpy as np
+from pathlib import Path
+from sys import platform
+from typing import List, Tuple
+
+nltk.download("averaged_perceptron_tagger")
 ROOT = Path(__file__)
 
 
@@ -25,38 +27,27 @@ def negater(sentence: str) -> list:
     3. If antonym exist get a random antonym and put it in the word's place
     4. If antonym does not exist, put "not" in front of the word if that's not a corpula, if the word is a corpula put "not" after the word.
     """
-
     wordnet = nltk.corpus.wordnet
     corpula = {"was", "is", "are", "am"}
     
     tgt = sentence.split(" ")
     tags = nltk.pos_tag(tgt) 
     res = list()
-
     for word, tag in zip(tgt, tags):
-        if tag[1][0] == "V": #If going to negate past-tense verbs only, change it to VBD, VBN
-            antonyms = list()    
-
+        if tag[1][0] == "V":
+            # word is verb; check for antonyms (change verb to VBD, VBN if past tense)
+            antonyms = []
             for syn in wordnet.synsets(word):
                 for l in syn.lemmas():
                     cands = l.antonyms()
                     if cands:
                         antonyms.append(cands[0].name())
-            
             antonyms = list(set(antonyms))
-
-            #Case 3
-            if len(antonyms) > 0:
-                res.append(np.random.choice(antonyms, 1, replace=False)[0])
-            #Case 4
-            else:
-                if word not in corpula:
-                    res.append(f"not {word}")
-                else:
-                    res.append(f"{word} not")
-        else:
-            res.append(word)
-    print(" ".join(res))
+            # antonym exists; use random antonym
+            if len(antonyms) > 0: res.append(np.random.choice(antonyms, 1, replace=False)[0])
+            # no antonym exists; use not
+            else: res.append(f"{word} not" if word in corpula else f"not {word}")
+        else: res.append(word)
     return " ".join(res)
 
 def generate_continuity_errors(document: str, n: int) -> Tuple[List[str], List[int]]:
@@ -69,25 +60,9 @@ def generate_continuity_errors(document: str, n: int) -> Tuple[List[str], List[i
     sentences =  [x.strip() for x in document.split(".") if x != ""]
     samples = np.random.choice(range(len(sentences)), n, replace=False)
     X = []
-
     for sample in samples:
         X.append(deepcopy(sentences))
-        
-        #X[-1][sample] = "".join([word if word not in negate or not word.endswith("ed") else word + " not " for word in X[-1][sample]])
         X[-1][sample] = negater(X[-1][sample])
-
-        """
-        negate = {"was", "is", "are", "am"}            
-        synthetic_sentence = []
-        for word in X[-1][sample].split(" "):
-            if word.endswith("ed"):
-                synthetic_sentence.append("was not "+word)
-            elif word in negate:
-                synthetic_sentence.append(word + " not")
-            else:
-                synthetic_sentence.append(word)
-        X[-1][sample] = " ".join(synthetic_sentence)
-        """
     X = [".\n".join(x) for x in X]
     y = samples
     return X, y
@@ -128,7 +103,6 @@ def write_synthetic_datapoint_to_file(X, y, path, plot_hole_type):
     with open(path, "w", encoding="utf-8") as synthetic_document_f:
         synthetic_document_f.write(f"{plot_hole_type} {y}\n")
         synthetic_document_f.write(X[1:])
-        #exit()
 
 
 if __name__ == "__main__":
@@ -141,7 +115,7 @@ if __name__ == "__main__":
             X_continuity, y_continuity = generate_continuity_errors(document, n)
             X_unresolved, y_unresolved = generate_unresolvedstory_errors(document, n)
             for i in range(n):
-                doc_name = str(doc_path).split("\\")[-1].split(".")[0]
+                doc_name = str(doc_path).split("\\" if platform=="win32" else "/")[-1].split(".")[0]
                 continuity_path = f"data/synthetic/synthetic_{doc_name}_continuity{i}.txt"
                 unresolved_path = f"data/synthetic/synthetic_{doc_name}_unresolved{i}.txt"
                 X, y = X_continuity[i], y_continuity[i]
