@@ -33,8 +33,10 @@ def negater(sentence: str) -> list:
     tgt = sentence.split(" ")
     tags = nltk.pos_tag(tgt) 
     res = list()
+    negated = False
     for word, tag in zip(tgt, tags):
-        if tag[1][0] == "V":
+        if tag[1][0] == "V" and not negated:
+            negated = True
             # word is verb; check for antonyms (change verb to VBD, VBN if past tense)
             antonyms = []
             for syn in wordnet.synsets(word):
@@ -111,7 +113,6 @@ if __name__ == "__main__":
     for doc_path in dataset:
         with open(doc_path, "r", encoding="utf8") as document_f:
             document = " ".join([x.strip() for x in document_f.readlines()])
-            #print(document)
             X_continuity, y_continuity = generate_continuity_errors(document, n)
             X_unresolved, y_unresolved = generate_unresolvedstory_errors(document, n)
             for i in range(n):
