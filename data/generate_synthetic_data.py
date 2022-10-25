@@ -117,8 +117,8 @@ if __name__ == "__main__":
             X_unresolved, y_unresolved = generate_unresolvedstory_errors(document, n)
             for i in range(n):
                 doc_name = str(doc_path).split("\\" if platform=="win32" else "/")[-1].split(".")[0]
-                continuity_path = f"data/synthetic/synthetic_{doc_name}_continuity{i}.txt"
-                unresolved_path = f"data/synthetic/synthetic_{doc_name}_unresolved{i}.txt"
+                continuity_path = ROOT.parent / f"synthetic/synthetic_{doc_name}_continuity{i}.txt"
+                unresolved_path = ROOT.parent / f"synthetic/synthetic_{doc_name}_unresolved{i}.txt"
                 X, y = X_continuity[i], y_continuity[i]
                 write_synthetic_datapoint_to_file(
                     X=X, y=y, path=continuity_path, plot_hole_type="continuity"
