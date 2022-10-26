@@ -28,7 +28,7 @@ def negater(sentence: str) -> list:
     4. If antonym does not exist, put "not" in front of the word if that's not a corpula, if the word is a corpula put "not" after the word.
     """
     wordnet = nltk.corpus.wordnet
-    corpula = {"was", "is", "are", "am"}
+    to_be_verbs = {"was", "is", "are", "am"}
     
     tgt = sentence.split(" ")
     tags = nltk.pos_tag(tgt) 
@@ -37,7 +37,12 @@ def negater(sentence: str) -> list:
     for word, tag in zip(tgt, tags):
         if tag[1][0] == "V" and not negated:
             negated = True
-            # word is verb; check for antonyms (change verb to VBD, VBN if past tense)
+            # is the verb a to-be verb?
+            if word in to_be_verbs:
+                res.append(f"{word} not")
+                continue
+            
+            # if not a to-be verb, can we find an antonym?
             antonyms = []
             for syn in wordnet.synsets(word):
                 for l in syn.lemmas():
@@ -45,10 +50,10 @@ def negater(sentence: str) -> list:
                     if cands:
                         antonyms.append(cands[0].name())
             antonyms = list(set(antonyms))
-            # antonym exists; use random antonym
             if len(antonyms) > 0: res.append(np.random.choice(antonyms, 1, replace=False)[0])
-            # no antonym exists; use not
-            else: res.append(f"{word} not" if word in corpula else f"not {word}")
+
+            # no antonym exists; just prepend "not" and hope things work out
+            else: res.append(f"not {word}")
         else: res.append(word)
     return " ".join(res)
 
