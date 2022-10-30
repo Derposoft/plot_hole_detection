@@ -1,10 +1,13 @@
-from typing import List
+from data.generate_synthetic_data import generate_synthetic_data
+import os
+import pickle as pkl
 from sentence_transformers import SentenceTransformer
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
-import os
+from typing import List
 ospj = os.path.join
+osl = os.listdir
 
 
 SENTENCE_ENCODER_DIM = {
@@ -44,19 +47,40 @@ class StoryDataset(Dataset):
         return self.X[idx], self.y[idx]
 
 
-def read_data(batch_size=8, data_path="data/synthetic", encoder="all-MiniLM-L6-v2", n_stories=None):
+def read_data(
+    batch_size=8,
+    data_path="data/synthetic",
+    cache_path="data/encoded",
+    encoder="all-MiniLM-L6-v2",
+    n_stories=5
+):
     """
     :param batch_size: batch_size for output dataloaders
     :param data_path: location of data
     :returns: tuple of (continuity_dataloader, unresolved_dataloader) dataloaders
 
-    first parses data files at data_path, then preprocesses them by encoding each story
-    by sentence by pading smaller stories with 0s at the end so that all stories are the 
-    same length. labels for continuity errors are 1-hot encoded. returns dataloaders of these stories.
+    first check to see if cached story encodings exist for this n_stories choice at
+    cache_path. otherwise:
+    1. parses data files at data_path; if num files in data_path < n_stories*2, 
+       generate new synthetic data
+    2. encoding each story by sentence
+    3. preprocess via padding smaller stories with 0s for same-length stories
+    4. labels for continuity errors are 1-hot encoded
+    5. returns dataloaders of these stories
+    6. cache these tensors
     """
+    # check if cached stories exist for this n_stories
+    cache_file = f"{n_stories}_stories_encoded.pkl"
+    cache_files = osl(cache_path)
+    if cache_file in cache_files:
+        with open(ospj(cache_path, cache_file), "rb") as f:
+            return pkl.load(f)
+
     # parse all data files in data_path and separate them by error type
-    data_files = os.listdir(data_path)
-    data_files = [x for x in data_files if x.endswith(".txt")]
+    data_files = [x for x in osl(data_path) if x.endswith(".txt")]
+    if len(data_files) < 2 * n_stories:
+        generate_synthetic_data(n_stories)
+        data_files = [x for x in osl(data_path) if x.endswith(".txt")]
     continuity_data = []
     continuity_labels = []
     unresolved_data = []
@@ -76,7 +100,7 @@ def read_data(batch_size=8, data_path="data/synthetic", encoder="all-MiniLM-L6-v
         continuity_labels = continuity_labels[:min(len(continuity_labels), n_stories)]
         unresolved_data = unresolved_data[:min(len(unresolved_data), n_stories)]
         unresolved_labels = unresolved_labels[:min(len(unresolved_labels), n_stories)]
-    
+
     # encode all data file sentences using encoder
     encoder = create_sentence_encoder()
     continuity_data = encode_stories(encoder, continuity_data)
@@ -99,7 +123,11 @@ def read_data(batch_size=8, data_path="data/synthetic", encoder="all-MiniLM-L6-v
     continuity_labels = torch.eye(longest_story_length)[continuity_labels]
     unresolved_labels = torch.FloatTensor(unresolved_labels)
 
-    # return dataloaders for each error type
+    # create dataloaders for each error type
     continuity_dataloader = DataLoader(StoryDataset(continuity_data, continuity_labels), batch_size=batch_size)
     unresolved_dataloader = DataLoader(StoryDataset(unresolved_data, unresolved_labels), batch_size=batch_size)
+    
+    # save encoded stories into cache
+    with open(ospj(cache_path, cache_file), "wb") as f:
+        pkl.dump((continuity_dataloader, unresolved_dataloader), f)
     return continuity_dataloader, unresolved_dataloader

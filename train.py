@@ -1,3 +1,4 @@
+import argparse
 from models import bert
 from data import utils
 import torch.nn as nn
@@ -17,16 +18,29 @@ def train(*, model, data, opt, criterion, epochs=10, verbose=True):
                 print(loss)
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--nstories", default=2, type=int, help="number of synthetic datapoints to use")
+    parser.add_argument("--batch_size", default=8, type=int)
+    parser.add_argument("--n_heads", default=16, type=int)
+    parser.add_argument("--lr", default=1e-3, type=float)
+    parser.add_argument("--encoder_type", default="all-MiniLM-L6-v2", type=str,
+        choices=["all-MiniLM-L6-v2", "paraphrase-albert-small-v2"])
+    config = parser.parse_args()
+    return config
+
+
 if __name__ == "__main__":
     """
     create and train baseline continuity and unresolved error models
     """
     ### hyperparameters ###
-    encoder_type = "all-MiniLM-L6-v2"
-    batch_size = 8
-    n_heads = 16
-    lr = 1e-3
-    n_stories = 2 # limit # of stories for debugging purposes
+    config = parse_args()
+    encoder_type = config.encoder_type
+    batch_size = config.batch_size
+    n_heads = config.n_heads
+    lr = config.lr
+    n_stories = config.nstories
 
     # create models
     print("creating models...")

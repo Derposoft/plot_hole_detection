@@ -112,8 +112,7 @@ def write_synthetic_datapoint_to_file(X, y, path, plot_hole_type):
         synthetic_document_f.write(X[1:])
 
 
-if __name__ == "__main__":
-    n = 10
+def generate_synthetic_data(n=10):
     dataset = get_datafiles()
     for doc_path in dataset:
         with open(doc_path, "r", encoding="utf8") as document_f:
@@ -132,3 +131,7 @@ if __name__ == "__main__":
                 write_synthetic_datapoint_to_file(
                     X=X, y=y, path=unresolved_path, plot_hole_type="unresolved"
                 )
+
+
+if __name__ == "__main__":
+    generate_synthetic_data()
