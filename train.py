@@ -16,6 +16,7 @@ def test(*, model, test_data, metrics="f1", verbose=True):
     :param test_data: test dataloader
     :param metrics: one of either "f1" or "mse".
     :param verbose: whether or not to print extra output
+    :returns: nothing. prints metrics
     """
     # collect metrics
     y_preds = []
@@ -46,6 +47,7 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
     :param train_data: train dataloader
     :param test_data: test dataloader
     :param verbose: whether or not to print extra output
+    :returns: nothing. trains given model using train_data and tests it every epoch with test_data
     """
     for epoch in range(epochs):
         if verbose:
