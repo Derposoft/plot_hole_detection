@@ -29,9 +29,8 @@ def negater(sentence: str) -> list:
     """
     wordnet = nltk.corpus.wordnet
     to_be_verbs = {"was", "is", "are", "am"}
-    
     tgt = sentence.split(" ")
-    tags = nltk.pos_tag(tgt) 
+    tags = nltk.pos_tag(tgt)
     res = list()
     negated = False
     for word, tag in zip(tgt, tags):
@@ -134,7 +133,6 @@ def generate_synthetic_data(n=10, train_ratio=0.8):
                 write_synthetic_datapoint_to_file(
                     X=X, y=y, path=unresolved_path, plot_hole_type="unresolved"
                 )
-
 
 if __name__ == "__main__":
     generate_synthetic_data()
