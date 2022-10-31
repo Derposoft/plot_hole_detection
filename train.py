@@ -1,10 +1,13 @@
 import argparse
-from models import bert
 from data import utils
+from models import bert
+import numpy as np
+from sklearn.metrics import f1_score, mean_squared_error
 import torch
 import torch.nn as nn
 from torch.optim import Adam
 device = "cuda" if torch.cuda.is_available() else "cpu"
+PR_THRESHOLD = None
 
 
 def test(*, model, test_data, metrics="f1", verbose=True):
@@ -14,14 +17,26 @@ def test(*, model, test_data, metrics="f1", verbose=True):
     :param metrics: one of either "f1" or "mse".
     :param verbose: whether or not to print extra output
     """
+    # collect metrics
     y_preds = []
     y_true = []
     for _, (X, y) in enumerate(test_data):
-        y_preds.append(model(X))
+        with torch.no_grad():
+            y_preds.append(model(X))
         y_true.append(y)
-    # TODO calculate metrics here using y_preds and y_true. find f1 score if metrics="f1", otherwise calculate mse.
-    results = "TODO"
-    # TODO print metrics here
+    y_preds, y_true = y_preds, y_true
+
+    # calculate metrics
+    results = None
+    y_true = torch.cat(y_true).cpu().flatten()
+    y_preds = torch.cat(y_preds).cpu().flatten()
+    if metrics == "f1":
+        y_preds = y_preds >= PR_THRESHOLD
+        results = f1_score(y_true, y_preds)
+    elif metrics == "mse":
+        results = mean_squared_error(y_true, y_preds)
+    else:
+        print(f"{metrics} metric not implemented. please choose one of [f1, mse].")
     print(f"{metrics} score: {results}")
 
 
@@ -47,11 +62,13 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--nstories", default=2, type=int, help="number of synthetic datapoints to use")
+    parser.add_argument("--n_stories", default=2, type=int, help="number of synthetic datapoints to use")
     parser.add_argument("--train_ratio", default=0.8, type=float, help="train ratio")
     parser.add_argument("--batch_size", default=8, type=int)
     parser.add_argument("--n_heads", default=16, type=int)
+    parser.add_argument("--n_epochs", default=10, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
+    parser.add_argument("--pr_threshold", default=0.5, type=float)
     parser.add_argument("--encoder_type", default="all-MiniLM-L6-v2", type=str,
         choices=["all-MiniLM-L6-v2", "paraphrase-albert-small-v2"])
     config = parser.parse_args()
@@ -68,8 +85,10 @@ if __name__ == "__main__":
     batch_size = config.batch_size
     n_heads = config.n_heads
     lr = config.lr
-    n_stories = config.nstories
+    n_stories = config.n_stories
+    n_epochs = config.n_epochs
     train_ratio = config.train_ratio
+    PR_THRESHOLD = config.pr_threshold
 
     # create models
     print("creating models...")
@@ -105,6 +124,7 @@ if __name__ == "__main__":
         test_data=continuity_test,
         opt=opt,
         criterion=criterion,
+        epochs=n_epochs,
         metrics="f1",
     )
     print("done")
@@ -119,6 +139,7 @@ if __name__ == "__main__":
         test_data=unresolved_test,
         opt=opt,
         criterion=criterion,
+        epochs=n_epochs,
         metrics="mse",
     )
     print("done")
