@@ -64,7 +64,7 @@ def generate_continuity_errors(document: str, n: int) -> Tuple[List[str], List[i
     :returns: (X, y) tuple for X=list of synthetic documents, y=list of labels
     """
     sentences =  [x.strip() for x in document.split(".") if x != ""]
-    samples = np.random.choice(range(len(sentences)), n, replace=False)
+    samples = np.random.choice(range(len(sentences)), min(n, len(sentences)), replace=False)
     X = []
     for sample in samples:
         X.append(deepcopy(sentences))
@@ -85,9 +85,10 @@ def generate_unresolvedstory_errors(document: str, n: int, p:float=0.1) -> Tuple
     # Preprocessing - remove new line character and empty lines
     sentences = [x.strip() for x in document.split(".") if x != ""]
     n_sentences = len(sentences)
+    most_sentences_to_remove = max(n+1, int(p * n_sentences))
     
     # Given number of lines will be random #See below 0 to 20% of Number of Sentences
-    samples = np.random.choice(range(1, max(n+1, int(p * n_sentences))), n, replace=False)
+    samples = np.random.choice(range(1, most_sentences_to_remove), min(n, most_sentences_to_remove-1), replace=False)
 
     # Create n text with n lines from the last removed   
     for sample in samples:
@@ -122,6 +123,7 @@ def generate_synthetic_data(n=10, train_ratio=0.8):
             X_continuity, y_continuity = generate_continuity_errors(document, n)
             X_unresolved, y_unresolved = generate_unresolvedstory_errors(document, n)
             for i in range(n):
+                if i >= len(X_continuity) or i >= len(X_unresolved): break
                 doc_name = str(doc_path).split("\\" if platform=="win32" else "/")[-1].split(".")[0]
                 continuity_path = ROOT.parent / f"synthetic/{train_test_prefix}synthetic_{doc_name}_continuity{i}.txt"
                 unresolved_path = ROOT.parent / f"synthetic/{train_test_prefix}synthetic_{doc_name}_unresolved{i}.txt"

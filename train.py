@@ -46,6 +46,7 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--nstories", default=2, type=int, help="number of synthetic datapoints to use")
+    parser.add_argument("--train_ratio", default=0.8, type=float, help="train ratio")
     parser.add_argument("--batch_size", default=8, type=int)
     parser.add_argument("--n_heads", default=16, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
@@ -66,6 +67,7 @@ if __name__ == "__main__":
     n_heads = config.n_heads
     lr = config.lr
     n_stories = config.nstories
+    train_ratio = config.train_ratio
 
     # create models
     print("creating models...")
@@ -76,10 +78,16 @@ if __name__ == "__main__":
     # read data
     print("reading data...")
     continuity_train, unresolved_train = utils.read_data(
-        batch_size=batch_size, n_stories=n_stories, data_path="data/synthetic/train", cache_path="data/encoded/train"
+        batch_size=batch_size,
+        n_stories=int(n_stories*train_ratio),
+        data_path="data/synthetic/train",
+        cache_path="data/encoded/train",
     )
     continuity_test, unresolved_test = utils.read_data(
-        batch_size=batch_size, n_stories=n_stories, data_path="data/synthetic/test", cache_path="data/encoded/test"
+        batch_size=batch_size,
+        n_stories=int(n_stories*(1-train_ratio)),
+        data_path="data/synthetic/test",
+        cache_path="data/encoded/test",
     )
     print("done.")
 

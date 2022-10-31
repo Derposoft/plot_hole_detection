@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from typing import List
+from tqdm import tqdm
 ospj = os.path.join
 osl = os.listdir
 
@@ -31,7 +32,7 @@ def create_sentence_encoder(encoder_name="all-MiniLM-L6-v2"):
 
 def encode_stories(encoder, stories: List[List[str]]):
     output = []
-    for story in stories:
+    for story in tqdm(stories):
         output.append(torch.stack([torch.Tensor(encoder.encode(sentence)) for sentence in story]))
     return output
 
@@ -79,13 +80,14 @@ def read_data(
     # parse all data files in data_path and separate them by error type
     data_files = [x for x in osl(data_path) if x.endswith(".txt")]
     if len(data_files) < 2 * n_stories:
+        print(f"{n_stories} datapoints necessary but only {len(data_files)//2} exist. regenerating synthetic data.")
         generate_synthetic_data(n_stories)
         data_files = [x for x in osl(data_path) if x.endswith(".txt")]
     continuity_data = []
     continuity_labels = []
     unresolved_data = []
     unresolved_labels = []
-    for data_file in data_files:
+    for data_file in tqdm(data_files):
         with open(ospj(data_path, data_file), "r") as f:
             lines = f.readlines()
             problem, label = lines[0].split()
@@ -102,6 +104,7 @@ def read_data(
         unresolved_labels = unresolved_labels[:min(len(unresolved_labels), n_stories)]
 
     # encode all data file sentences using encoder
+    print("encoding stories...")
     encoder = create_sentence_encoder()
     continuity_data = encode_stories(encoder, continuity_data)
     unresolved_data = encode_stories(encoder, unresolved_data)
