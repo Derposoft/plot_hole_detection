@@ -1,8 +1,10 @@
 import argparse
 from models import bert
 from data import utils
+import torch
 import torch.nn as nn
 from torch.optim import Adam
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def test(*, model, test_data, metrics="f1", verbose=True):
@@ -73,6 +75,8 @@ if __name__ == "__main__":
     print("creating models...")
     baseline_continuity = bert.ContinuityBERT(n_heads=n_heads, input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type])
     baseline_unresolved = bert.UnresolvedBERT(n_heads=n_heads, input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type])
+    baseline_continuity.to(device)
+    baseline_unresolved.to(device)
     print("done.")
 
     # read data
@@ -101,6 +105,7 @@ if __name__ == "__main__":
         test_data=continuity_test,
         opt=opt,
         criterion=criterion,
+        metrics="f1",
     )
     print("done")
 
@@ -114,5 +119,6 @@ if __name__ == "__main__":
         test_data=unresolved_test,
         opt=opt,
         criterion=criterion,
+        metrics="mse",
     )
     print("done")

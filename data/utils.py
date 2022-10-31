@@ -9,6 +9,7 @@ from typing import List
 from tqdm import tqdm
 ospj = os.path.join
 osl = os.listdir
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 SENTENCE_ENCODER_DIM = {
@@ -26,7 +27,7 @@ def create_sentence_encoder(encoder_name="all-MiniLM-L6-v2"):
     """
     assert encoder_name in SENTENCE_ENCODER_DIM, f"encoder name must be one of {list(SENTENCE_ENCODER_DIM.keys())}"
     encoder = SentenceTransformer(f"sentence-transformers/{encoder_name}")
-    encoder.eval()
+    encoder.eval().to(device)
     return encoder
 
 
