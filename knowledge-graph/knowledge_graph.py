@@ -267,7 +267,7 @@ def main():
                 nltk_ner.display(named_entities)
                 # ToDo -- Implement ner_to_dict for nltk_ner
                 spacy_ner = SpacyNER()
-                named_entities = spacy_ner .ner_to_dict(spacy_ner.ner(doc))
+                named_entities = spacy_ner.ner_to_dict(spacy_ner.ner(doc))
             elif(sys.argv[i]=="stanford"):
                 print("using Stanford for NER (may take a while):  \n\n\n")
                 stanford_ner = StanfordNER()
