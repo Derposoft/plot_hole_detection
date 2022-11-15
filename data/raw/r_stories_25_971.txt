@@ -1,0 +1,27 @@
+Choose Your Own Adventure by t2_6lkz3aor
+
+&#x200B;
+
+1. You wake up in a dark room with no memory of your past except for the knowledge that you are a stowaway on a ship. You hear men talking around you, though you can't quite tell where their voices are coming from. The year is 1763. In an effort to try and find out more about who you are and why you are here, you decide to explore. To explore the room you are in, go to **6.** To try and find an exit out of the room, go to **2.**
+2. >!You look around the room and find a small door, and you walk through it. As you open the door, you are blinded by the light from the outside. There is a crew member walking around. He looks very exhausted. To talk to him, go to 4. To hide from him and look around the ship, go to 17.!<
+3. >!You follow the voices and are pulled down underwater. You drown. You are dead. Rule 2: Don't trust the mermaids. They will drown you.!<
+4. >!You walk up to the crew member. He gives you a puzzled look, and says, "I don't believe I've seen you around here before. Are you part of the crew?" To tell him that you are a stowaway, go to 5. To lie and pretend to be part of the crew, go to 7.!<
+5. >!He pulls out his sword and stabs you through the heart. You are dead. Rule 1: Don't reveal yourself as a stowaway on a pirate ship.!<
+6. >!You look around the room and find a small hatch on the floor. You hear a woman screaming for help and gasping for air under it. To open the hatch and try and pull her out, go to 3. To close the hatch and continue looking around, go to 8.!<
+7. >!The crew member isn't convinced. He says that he is going to get the captain and to wait here. There is a barrel next to you. To wait for the captain, go to 14. To hide in the barrel, go to 16.!<
+8. >!You search for the next hour, but find nothing, so you leave the room. As you walk out, you run into a fat man who tells you that he is the captain of the ship. He pulls you into another room and starts to question you. "Who are you and what are you doing on my ship?" he asks bluntly. To tell him that you are a crew member, go to 9. To tell him the truth, that you don't know who you are, go to 10. To tell him that you are a stowaway, go to 5.!<
+9. >!The captain doesn't believe you. He locks you in the room for a couple of hours. Once he comes back, he yells at you to walk the plank. As you look around the ship, you see the crew all have their swords drawn. You have no hope of escape. You walk the plank and drown in the water. Rule 3: Don't lie to the captain.!<
+10. >!The captain seems to believe you. He tells you, "I know you're telling the truth, though I don't know how that can be. If you truly have no idea, I would recruit you. Will you be a crew member on this ship?" To say yes, go to 12. To say no, go to 11.!<
+11. >!The captain gets you a small boat and tells you to head west for land. To follow the pirate captain's advice, go to 18. To disobey and head east, go to 19.!<
+12. >!You are a pirate! For the next few months, you spend your time raiding ships, digging up treasure, and having a wonderful time. You become very rich from all of that gold that you steal, and the other pirates become angry. They come in to your sleeping quarters and kill you in your sleep for your money. Rule 4: Don't be a pirate.!<
+13. >!There is no way to get to this text box. How did you get here? However you did it, I'm impressed.!<
+14. >!The captain comes over a few moments later. He is a fat man with a long mustache. He asks you, "You aren't part of the crew, so how did you get here?" To jump into the water to try and escape from him, go to 15. To tell him that you don't know, go to 10.!<
+15. >!You dive head first into the water. It is freezing cold, and you drown. Rule 5: Don't go swimming.!<
+16. >!You hide in the barrel. Sadly, this barrel you chose is filled with poop. The captain doesn't find you, but after being in the barrel for about an hour, you pass out from the stench. You wake up in a familiar room. Start again from 1.!<
+17. >!You look around the ship, and are discovered by a group of angry crew members. They threaten to make you a slave or they will kill you. You are forced to suffer through the rest of your life as a pirate slave, working the hardest jobs without any pay. Rule 6: Don't explore the ship.!<
+18. >!After 2 days of floating on the ocean, you end up at a deserted island. The captain may have told the truth, but you should know better than to trust a pirate's word. You live out the rest of your live isolated on this island. You found the bad ending.!<
+19. >!You head east for a week. You are sick from drinking the salty ocean water, and are starving to death. Luckily, you encounter another ship right before you are out of hope. Rescue! You found the good ending.!<
+
+&#x200B;
+
+There are 6 rules and 2 endings.

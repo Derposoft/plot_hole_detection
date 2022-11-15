@@ -1,0 +1,23 @@
+Choose Your Own Adventure by t2_6lkz3aor
+
+You are a researcher at a private robotics facility. You are on the verge of a breakthrough, when something goes horribly wrong. There is a problem with one of the robots, making it kill many of your colleagues. Everyone else escaped the building, but you are still in the break room, far from the exit. You hear the robot coming towards you. You don't have long. *Do you run to the control room {4} or the bathroom {5}?*
+
+**1.** >!You hear an explosion in the distance. The prototype was a missile, a secret project commissioned by the government. You just launched it right into the middle of the street. You are arrested and charged with the murder of 180 people who were blown up, which included all of your colleagues.!<
+
+**2.** >!You turn off the power for the entire facility. The robot is still on because it is battery powered. It comes in and smashes your skull.!<
+
+**3.** >!The doors to the control room slam shut and lock immediately. The robot, though, is still trying to get in. You estimate you have 2 minutes before it breaks down the door. Do you climb through the vents {7} or barricade the door {8}?!<
+
+**4.** >!You decide the best thing to do is to go to the control room and try to find a way to shut the robot off. The room is far, but you are able to reach it before the robot catches up to you. You see 4 levers. You don't have time read about what each does. Which one do you pull? "Prototype, DO NOT USE" {1}, "Power" {2}, "Doors" {3}, or "Emergency." {6}?!<
+
+**5.** >!That was a bad idea. Going into a room where the only exit is the way you came from? The robot stands in the doorway, blocking your path out. It slays you when you try to leave the bathroom.!<
+
+**6.** >!You pull down the lever, and it sends out an emergency call for help. The robot comes in and bashes your brains before anyone can arrive, though.!<
+
+**7.** >!You climb into the vent system. It is tight squeeze, but you fit in. Do you go up to roof {9} or continue forward {10}?!<
+
+**8.** >!You barricade the door with everything in the room you can move, but it only buys you a few minutes. The robot eventually breaks in an breaks you neck.!<
+
+**9.** >!You get onto the roof, and signal to your colleagues on the ground for help. They call a helicopter which takes you down. You make it out alive, but have permanent PTSD.!<
+
+**10.** >!You continue forward, and the vent system gets tighter on the sides the farther you go. Eventually, you hit a dead end and are in too tight a squeeze to move backwards. Your colleagues assume the robot killed you and leave. You die of thirst 2 days later, still stuck in the vents.!<

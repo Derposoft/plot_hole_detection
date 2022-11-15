@@ -1,0 +1,23 @@
+How i was the school hero... for 2 weeks. by t2_14wt75j1
+
+Never posted this story from my school days before and my mates seemed to think it was great when i told them the story a few days ago so i'm going to share it here.
+
+Back in secondary school during a very boring IT class i was thinking about GTA San Andreas and what new mods i was going to download when i got home. Then i came to the conclusion why wait till i got home why not play it there and then in IT class. Then realizing that the school system had restricted access to content. This was a problem. If only i had access to an administrators account i could stop them from stopping us.
+
+That night i went home and with very little computer knowledge i googled how to make a keylogger. For those that don't know what a keylogger is its a simple program that runs in the background and copy's every key input into a notepad file so you can view it later. I also made a copy of GTASA and put them both onto a USB Drive. When i went into school the next day i had everything i need on the USB drive i just needed access to an teachers computer. I got my friends to start a fake fight so the teacher would have to separate them and take the outside the room. 
+
+&amp;#x200B;
+
+The plan worked, the teacher had left the classroom here was my chance. I ran over to the computer which was still unlocked and inserted the USB and ran the keylogger, i locked the computer after i had done this so i could see the username and password being typed. I Retrieved the USB later on in class hoping that everything was saved and to my surprise, the program worked the first line of text was the username and password! i was in! now for the fun part. 
+
+&amp;#x200B;
+
+There was a program that enabled teachers to lock out all computers and stop access to students so i flipped that around and locked my teacher out of her account playing it cool so that it looked like a bug in the system and not that someone had purposely done it to her. i then uploaded GTASA to the shared school server and made it appear as a MyMaths Program. I then spread the news around the school about the hidden GTASA file in the shared server and to be smart while using it. So every lesson here was me thinking i was the dog bollocks, Full unrestricted access to the school system. Any website i wanted to visit i could. Uploading new games every day to the shared servers. Kids coming up to me with all kinds of requested and saying how awesome it was that i had done this, i felt unstoppable like a stupid 14y/o does. Thats when they brought in a professional IT Engineer to find out what was going on.
+
+&amp;#x200B;
+
+ It didn't take him long to find that there was a lot of traffic going to a MyMaths Program on a shared server so he opened the app and to his surprise there was GTASA so he looked at who uploaded it and found it was my teacher which clearly wasn't right but he could also see the time it was uploaded and from which computer inside the building. Which lead him to the sign-in history of the device and there was me logging out in the middle of a lesson and my teacher logging into the same machine. He got me. I was then excluded for 2 weeks and a week of isolation when i returned and wasn't aloud to take IT as my option in the final year and just like that my 2 weeks of fame was gone.
+
+Anyway that was my story sorry that its long winded and the punctuation/grammar is incorrect.
+
+&amp;#x200B;

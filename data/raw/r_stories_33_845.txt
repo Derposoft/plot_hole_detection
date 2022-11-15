@@ -1,0 +1,24 @@
+Choose Your Own Adventure by t2_6lkz3aor
+
+ 
+
+1. You wake up in a freezing cold prison cell, just like every day for the past 5 years. You are on death row for murder, but you know that you are innocent. This is the day of your execution. There is nothing in your cell other than a small barred window and a locked metal door. To look out the window, go to 2. To try and kick down the door, go to 3.
+2. >!You look out the window and see a vent and another cell with a man you made friends with during your time in prison. To climb into the vent alone, go to 4. To try to escape with your friend, go to 9.!<
+3. >!You kick at the door for a few minutes, but it is clear that you aren't strong enough to bring it down. While thinking of what else you could try, a guard unlocks the door and pulls you out of the cell. He's here to bring you to the electric chair. To try to break away from the guard's grasp, go to 5. To go with the guard, go to 8.!<
+4. >!You begin to climb through the vent. It is almost too small for you to fit, but you manage. You can hear commotion down below. The guards are losing their minds because you aren't inside your cell. You need to be careful if you don't want them to find you. Suddenly, you feel a pull on your leg. To ignore it and continue through the vent system, go to 11. To see what is behind you, go to 7.!<
+5. >!The guard's grip on you is weak. As you run away, the guard shouts at you, "Wait, you don't know what you're doing! Come back here!" He isn't chasing you. To trust in the guard and return to him, go to 6. To continue running. go to 14.!<
+6. >!You decide to trust the guard. As you start walking back to him, you feel a hand on your shoulder. You hear a kind and soothing voice telling you to turn around. To turn around, go to 7. To ignore the voice and go to the guard, go to 8.!<
+7. >!Foolish foolish foolish foolish foolish. You see something no person deserves to see. Your eyes roll into the back of your head, and you die. Rule 1: Don't turn around.!<
+8. >!The guard brings you into the execution chamber, and starts to lock you in the electric chair. To accept your immanent death, go to 10. To pull out of the electric chair and try to get out of the execution chamber, go to 12.!<
+9. >!While you are trying to get your friend out of his cell, a guard comes up behind you and shoots you. You spent too long trying to help your friend. Rule 5: Always work alone.!<
+10. >!Be glad that this is how you died. Of all of the ways to die in this prison, this is the least painful way. Rule 3: Don't get electrocuted.!<
+11. >!The vent system leads you to the roof of the prison. You climb out, and take a look around. You haven't been outside at night since before you were incarcerated. It is a wonderful sight. You guess that you have at least a couple of minutes before the guards find you up here. To climb down carefully out of the prison, go to 13. To jump from to roof to the ground to save time, go to 18. The roof is about 40 feet off the ground by your estimation.!<
+12. >!You successfully get out of the execution chamber. As you run down the hall, you see two ways out of the prison; the prison yard and the visitors center. To go to the prison yard, go to 16. To go to the visitors center, go to 17.!<
+13. >!You are out of the prison. As soon as you are out of the prison, you begin running. You assume a new identity, move to a different country, and live out the rest of your life peacefully. You found the good ending.!<
+14. >!The guard shoots you. You die instantly. Rule 2: Don't run from the guard.!<
+15. >!Rule 0: Don't be a dirty dirty cheater and go to steps you weren't directed to. Shame on you.!<
+16. >!You reach the prison yard, but have nowhere to go. If you climb the bars, the guards would catch you before you got over. You would hide, but the guards would find you. There are no options. You are brought back to the execution chamber. Proceed to 10.!<
+17. >!You forgot about the multiple layers of reinforced glass specifically made to prevent someone escaping like this. The guards corner you and you get shot. Rule 4: Don't go into a small room with only one difficult-to-reach exit.!<
+18. >!You fall and break your neck. That was a bad idea. Rule 6: Don't jump off high places.!<
+
+There is are 6 rules and 1 ending.
