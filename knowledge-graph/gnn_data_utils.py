@@ -95,6 +95,7 @@ if __name__=='__main__':
     all_spacy_entities = list(all_spacy_entities)
     all_spacy_entities.append('O')
     spacy_entities_to_index_map = {v:k for k,v in enumerate(all_spacy_entities)}
-    path_ = os.path.join(glob.glob('/home/shaunaks/plot/plot_hole_detection/knowledge-graph/data/result/*.csv')[0])
+    paths = os.path.join(glob.glob('/home/shaunaks/plot/plot_hole_detection/knowledge-graph/data/result/*.csv'))
     model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-    nodes_features, edges_list, edge_features = process_csv(path_, all_spacy_entities, spacy_entities_to_index_map, model)
+    for path in paths:
+        nodes_features, edges_list, edge_features = process_csv(path, all_spacy_entities, spacy_entities_to_index_map, model)
