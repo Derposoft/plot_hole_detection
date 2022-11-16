@@ -17,8 +17,8 @@ import re
 import json
 from stanfordcorenlp import StanfordCoreNLP
 
-nltk.download('maxent_ne_chunker')
-nltk.download('words')
+nltk.download('maxent_ne_chunker', quiet=True)
+nltk.download('words', quiet=True)
 
 class StanfordNER:
     def __init__(self):

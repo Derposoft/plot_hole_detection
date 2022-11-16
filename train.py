@@ -21,9 +21,9 @@ def test(*, model, test_data, metrics="f1", verbose=True):
     # collect metrics
     y_preds = []
     y_true = []
-    for _, (X, y) in enumerate(test_data):
+    for _, (X, y, kgs) in enumerate(test_data):
         with torch.no_grad():
-            y_preds.append(model(X))
+            y_preds.append(model(X, kgs))
         y_true.append(y)
     y_preds, y_true = y_preds, y_true
 
@@ -52,8 +52,8 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
     for epoch in range(epochs):
         if verbose:
             print(f"starting epoch {epoch}")
-        for i, (X, y) in enumerate(train_data):
-            y_hat = model(X)
+        for i, (X, y, kgs) in enumerate(train_data):
+            y_hat = model(X, kgs)
             loss = criterion(y_hat, y)
             loss.backward()
             opt.step()
@@ -64,7 +64,7 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_stories", default=2, type=int, help="number of synthetic datapoints to use")
+    parser.add_argument("--n_stories", default=5, type=int, help="number of synthetic datapoints to use")
     parser.add_argument("--train_ratio", default=0.8, type=float, help="train ratio")
     parser.add_argument("--batch_size", default=8, type=int)
     parser.add_argument("--n_heads", default=16, type=int)
@@ -73,6 +73,8 @@ def parse_args():
     parser.add_argument("--pr_threshold", default=0.5, type=float)
     parser.add_argument("--encoder_type", default="all-MiniLM-L6-v2", type=str,
         choices=["all-MiniLM-L6-v2", "paraphrase-albert-small-v2"])
+    parser.add_argument("--model_type", default="continuity_bert", type=str,
+        choices=["continuity_bert", "unresolved_bert", "continuity_bert_kg", "unresolved_bert_kg"])
     config = parser.parse_args()
     return config
 
@@ -84,6 +86,8 @@ if __name__ == "__main__":
     ### hyperparameters ###
     config = parse_args()
     encoder_type = config.encoder_type
+    model_type = config.model_type
+    use_kg = "kg" in model_type
     batch_size = config.batch_size
     n_heads = config.n_heads
     lr = config.lr
@@ -92,14 +96,6 @@ if __name__ == "__main__":
     train_ratio = config.train_ratio
     PR_THRESHOLD = config.pr_threshold
 
-    # create models
-    print("creating models...")
-    baseline_continuity = bert.ContinuityBERT(n_heads=n_heads, input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type])
-    baseline_unresolved = bert.UnresolvedBERT(n_heads=n_heads, input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type])
-    baseline_continuity.to(device)
-    baseline_unresolved.to(device)
-    print("done.")
-
     # read data
     print("reading data...")
     continuity_train, unresolved_train = utils.read_data(
@@ -107,41 +103,42 @@ if __name__ == "__main__":
         n_stories=int(n_stories*train_ratio),
         data_path="data/synthetic/train",
         cache_path="data/encoded/train",
+        get_kgs=use_kg,
     )
     continuity_test, unresolved_test = utils.read_data(
         batch_size=batch_size,
         n_stories=int(n_stories*(1-train_ratio)),
         data_path="data/synthetic/test",
         cache_path="data/encoded/test",
+        get_kgs=use_kg,
     )
     print("done.")
 
-    # train continuity model
-    print("training continuity error model...")
-    opt = Adam(baseline_continuity.parameters(), lr=lr)
-    criterion = nn.CrossEntropyLoss()
-    train(
-        model=baseline_continuity,
-        train_data=continuity_train,
-        test_data=continuity_test,
-        opt=opt,
-        criterion=criterion,
-        epochs=n_epochs,
-        metrics="f1",
-    )
-    print("done")
+    # create models and training artifacts
+    print("creating models and training artifacts...")
+    if "continuity" in model_type:
+        model = bert.ContinuityBERT(n_heads=n_heads, input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type], use_kg=use_kg)
+        train_data, test_data = continuity_train, continuity_test
+        criterion = nn.CrossEntropyLoss()
+        metrics = "f1"
+    else:
+        model = bert.UnresolvedBERT(n_heads=n_heads, input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type], use_kg=use_kg)
+        train_data, test_data = unresolved_train, unresolved_test
+        criterion = nn.MSELoss()
+        metrics = "mse"
+    opt = Adam(model.parameters(), lr=lr)
+    model.to(device)
+    print("done.")
 
-    # train unresolved model
-    print("training unresolved error model...")
-    opt = Adam(baseline_unresolved.parameters(), lr=lr)
-    criterion = nn.MSELoss()
+    # train model
+    print(f"training {model_type} model...")
     train(
-        model=baseline_unresolved,
-        train_data=unresolved_train,
-        test_data=unresolved_test,
+        model=model,
+        train_data=train_data,
+        test_data=test_data,
         opt=opt,
         criterion=criterion,
         epochs=n_epochs,
-        metrics="mse",
+        metrics=metrics,
     )
     print("done")
