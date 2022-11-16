@@ -1,23 +1,26 @@
 from copy import deepcopy
 import nltk
 import numpy as np
+import os
 from pathlib import Path
+import shutil
 from sys import platform
 from typing import List, Tuple
+#from knowledge_graph import gnn_data_utils as kg_utils
+from knowledge_graph.gnn_data_utils import process_extraction_results
 
 nltk.download("averaged_perceptron_tagger")
 ROOT = Path(__file__)
-
-
-def is_txt(path) -> bool:
-    return str(path).split(".")[-1] == "txt"
+osl = os.listdir
+ospj = os.path.join
 
 
 def get_datafiles() -> list:
     """
     returns list of stories(.txt file) in raw_story_file folder
     """
-    return [x for x in Path(ROOT.parent / "raw").iterdir() if is_txt(x)]
+    return [x for x in Path(ROOT.parent / "raw").iterdir() if str(x).endswith(".txt")]
+
 
 def negater(sentence: str) -> list:
     """
@@ -55,6 +58,7 @@ def negater(sentence: str) -> list:
             else: res.append(f"not {word}")
         else: res.append(word)
     return " ".join(res)
+
 
 def generate_continuity_errors(document: str, n: int) -> Tuple[List[str], List[int]]:
     """
@@ -136,5 +140,41 @@ def generate_synthetic_data(n=10, train_ratio=0.8):
                     X=X, y=y, path=unresolved_path, plot_hole_type="unresolved"
                 )
 
+
+def generate_kgs(data_files_path):
+    # 1. copy all data_files to knowledge_graph/data/input/
+    kg_path = "./knowledge_graph"
+    for data_file in osl(data_files_path):
+        if not data_file.endswith(".txt"): continue
+        shutil.copy(ospj(data_files_path, data_file), ospj(f"{kg_path}/data/input/", data_file))
+        break
+
+    # 2. run commands to create knowledge graph outputs
+    os.chdir(kg_path)
+    os.system(f"python3 knowledge_graph.py stanford")
+    os.system(f"python3 relation_extractor.py")
+    os.system(f"python3 create_structured_csv.py")
+    os.chdir("..")
+
+    # 3. run knowledge graph tensor generation code
+    kgs = process_extraction_results()
+
+    # 4. clean up knowledge_graph/data folders
+    folders_to_cleanup = [
+        f"{kg_path}/data/input/",
+        f"{kg_path}/data/output/kg/",
+        f"{kg_path}/data/output/ner",
+        f"{kg_path}/data/result/"
+    ]
+    for folder in folders_to_cleanup:
+        for file in osl(folder):
+            if file != ".gitignore":
+                os.remove(ospj(folder, file))    
+
+    # 5. return generated knowledge graphs
+    return kgs
+
+
 if __name__ == "__main__":
     generate_synthetic_data()
+    generate_kgs("data/synthetic/test")

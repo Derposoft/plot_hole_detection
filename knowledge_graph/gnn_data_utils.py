@@ -35,7 +35,7 @@ def get_node_features(adj_dict, all_spacy_entities, spacy_entities_to_index_map)
     
     return nodes_features
     
-def get_edge_features(adj_dict):
+def get_edge_features(adj_dict, model):
     edge_features = list()
     for entity in adj_dict:
         for adj_entity_and_type in adj_dict[entity]['Edges']:
@@ -80,7 +80,7 @@ def create_adjacency_dict(kg_post_processed, all_spacy_entities, spacy_entities_
     nodes_features = get_node_features(adj_dict, all_spacy_entities, spacy_entities_to_index_map)
 
     #get edge features
-    edge_features = get_edge_features(adj_dict)
+    edge_features = get_edge_features(adj_dict, model)
 
     return torch.Tensor(nodes_features), torch.Tensor(edges_list).long(), torch.Tensor(np.array(edge_features))
     
@@ -90,13 +90,21 @@ def process_csv(csv_file_name, all_spacy_entities, spacy_entities_to_index_map, 
     nodes_features, edges_list, edge_features = create_adjacency_dict(kg_post_processed, all_spacy_entities, spacy_entities_to_index_map, model)
     return nodes_features, edges_list, edge_features
 
-if __name__=='__main__':
+
+def process_extraction_results():
     all_spacy_entities = en_core_web_sm.load().get_pipe('ner').labels
     all_spacy_entities = list(all_spacy_entities)
     all_spacy_entities.append('O')
+    paths = glob.glob("./knowledge_graph/data/result/*.csv")
     spacy_entities_to_index_map = {v:k for k,v in enumerate(all_spacy_entities)}
-    paths = glob.glob('/home/shaunaks/plot/plot_hole_detection/knowledge-graph/data/result/*.csv')
     model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+    kgs = {}
     for path in paths:
-        nodes_features, edges_list, edge_features = process_csv(path, all_spacy_entities, spacy_entities_to_index_map, model)
-        print('For path:{} nodes_features:{} edges_list:{} edge_features:{}'.format(path, nodes_features.size(), edges_list.size(), edge_features.size()))
+        node_features, edges_list, edge_features = process_csv(path, all_spacy_entities, spacy_entities_to_index_map, model)
+        kgs[path] = {"node_feats": node_features, "edge_indices": edges_list, "edge_feats": edge_features}
+        print('For path:{} nodes_features:{} edges_list:{} edge_features:{}'.format(path, node_features.size(), edges_list.size(), edge_features.size()))
+    return kgs
+
+
+if __name__=='__main__':
+    process_extraction_results()
