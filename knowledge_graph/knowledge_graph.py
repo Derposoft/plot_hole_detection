@@ -17,6 +17,9 @@ import re
 import json
 from stanfordcorenlp import StanfordCoreNLP
 
+nltk.download('maxent_ne_chunker')
+nltk.download('words')
+
 class StanfordNER:
     def __init__(self):
         self.get_stanford_ner_location()
@@ -239,9 +242,9 @@ def main():
     coref_cache_path = output_path + "caches/"
     coref_resolved_op = output_path + "kg/"
     
-    stanford_core_nlp_path = input("\n\nProvide (relative/absolute) path to stanford core nlp package.\n Press carriage return to use './stanford-corenlp-full-2018-10-05' as path:")
-    if(stanford_core_nlp_path == ''):
-        stanford_core_nlp_path = "./stanford-corenlp-full-2018-10-05"
+    #stanford_core_nlp_path = input("\n\nProvide (relative/absolute) path to stanford core nlp package.\n Press carriage return to use './stanford-corenlp-full-2018-10-05' as path:")
+    #if(stanford_core_nlp_path == ''):
+    stanford_core_nlp_path = "./stanford-corenlp-full-2018-10-05"
 
     file_list = []
     for f in glob.glob('./data/input/*'):
@@ -261,15 +264,15 @@ def main():
         
         for i in range(1,len(sys.argv)):
             if(sys.argv[i] == "nltk"):
-                print("\nusing NLTK for NER")
+                #print("\nusing NLTK for NER")
                 nltk_ner = NltkNER()
                 named_entities = nltk_ner.ner(doc)
-                nltk_ner.display(named_entities)
+                #nltk_ner.display(named_entities)
                 # ToDo -- Implement ner_to_dict for nltk_ner
                 spacy_ner = SpacyNER()
                 named_entities = spacy_ner.ner_to_dict(spacy_ner.ner(doc))
             elif(sys.argv[i]=="stanford"):
-                print("using Stanford for NER (may take a while):  \n\n\n")
+                #print("using Stanford for NER (may take a while):  \n\n\n")
                 stanford_ner = StanfordNER()
                 tagged = stanford_ner.ner(doc)
                 ner = stanford_ner.ner(doc)
@@ -277,10 +280,10 @@ def main():
                 # ToDo -- Implement ner_to_dict for stanford_ner
                 named_entities = stanford_ner.ner_to_dict(ner)
             elif(sys.argv[i]=="spacy"):
-                print("\nusing Spacy for NER\n")
+                #print("\nusing Spacy for NER\n")
                 spacy_ner = SpacyNER()
                 named_entities = spacy_ner.ner(doc)
-                spacy_ner.display(named_entities)
+                #spacy_ner.display(named_entities)
                 named_entities = spacy_ner.ner_to_dict(named_entities)
             elif(sys.argv[i]=="verbose"):
                 verbose = True
