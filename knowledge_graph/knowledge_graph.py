@@ -25,9 +25,10 @@ class StanfordNER:
         self.get_stanford_ner_location()
 
     def get_stanford_ner_location(self):
-        print("Provide (relative/absolute) path to stanford ner package.\n Press carriage return to use './stanford-ner-2018-10-16' as path:") 
-        loc = input()
-        print("... Running stanford for NER; this may take some time ...")
+        #print("Provide (relative/absolute) path to stanford ner package.\n Press carriage return to use './stanford-ner-2018-10-16' as path:") 
+        #loc = input()
+        loc = ''
+        #print("... Running stanford for NER; this may take some time ...")
         if(loc == ''):
             loc = "./stanford-ner-2018-10-16"
         self.stanford_ner_tagger = nltk.tag.StanfordNERTagger(loc+'/classifiers/english.all.3class.distsim.crf.ser.gz',
