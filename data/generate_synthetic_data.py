@@ -177,4 +177,3 @@ def generate_kgs(data_files_path):
 
 if __name__ == "__main__":
     generate_synthetic_data()
-    generate_kgs("data/synthetic/test")

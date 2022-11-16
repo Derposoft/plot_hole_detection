@@ -101,8 +101,8 @@ def process_extraction_results():
     kgs = {}
     for path in paths:
         node_features, edges_list, edge_features = process_csv(path, all_spacy_entities, spacy_entities_to_index_map, model)
-        kgs[path] = {"node_feats": node_features, "edge_indices": edges_list, "edge_feats": edge_features}
-        print('For path:{} nodes_features:{} edges_list:{} edge_features:{}'.format(path, node_features.size(), edges_list.size(), edge_features.size()))
+        kgs[path.lstrip("named_entity_")] = {"node_feats": node_features, "edge_indices": edges_list, "edge_feats": edge_features}
+        #print('For path:{} nodes_features:{} edges_list:{} edge_features:{}'.format(path, node_features.size(), edges_list.size(), edge_features.size()))
     return kgs
 
 
