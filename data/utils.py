@@ -4,7 +4,7 @@ import pickle as pkl
 from sentence_transformers import SentenceTransformer
 import torch
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, default_collate
 from typing import List
 from tqdm import tqdm
 ospj = os.path.join
@@ -16,6 +16,19 @@ SENTENCE_ENCODER_DIM = {
     "all-MiniLM-L6-v2": 384,
     "paraphrase-albert-small-v2": 768
 }
+
+
+def clean_dir(dir, filetype=""):
+    """
+    :param dir: directory to clean
+    :param filetype: filetype to clean from that directory. if empty, cleans
+    all files EXCEPT for .gitignore.
+    :returns: None. this is a data/directory cleaning utility function that
+    just deletes all filetype-type files from the given dir.
+    """
+    for file in osl(dir):
+        if filetype != "" and file.endswith(filetype) or filetype == "" and file != ".gitignore":
+            os.remove(ospj(dir, file))
 
 
 def create_sentence_encoder(encoder_name="all-MiniLM-L6-v2"):
@@ -32,6 +45,13 @@ def create_sentence_encoder(encoder_name="all-MiniLM-L6-v2"):
 
 
 def encode_stories(encoder, stories: List[List[str]]):
+    """
+    :param encoder: SentenceTransformer encoder model to use for encoding stories
+    :param stories: list of stories to encode. each "story" is a list of sentences.
+    :returns: list of encoded stories. story_i is of the shape (n_sentences_i, encoder_dim)
+    where n_sentences_i is the number of sentences in story_i and encoder_dim is the
+    output dim of the provided encoder.
+    """
     output = []
     for story in tqdm(stories):
         output.append(torch.stack([torch.Tensor(encoder.encode(sentence)) for sentence in story]))
@@ -47,7 +67,11 @@ class StoryDataset(Dataset):
     def __len__(self):
         return len(self.y)
     def __getitem__(self, idx):
-        return self.X[idx], self.y[idx], self.kgs[idx] if self.kgs else None
+        return self.X[idx], self.y[idx], self.kgs[idx] if self.kgs else {}#{"node_feats": 1, "edge_indices": 1, "edge_feats": 1}
+def custom_dataloader_collate(data):
+    X, y = default_collate([(x[0], x[1]) for x in data])
+    kgs = [x[2] for x in data]
+    return X, y, kgs
 
 
 def read_data(
@@ -89,7 +113,8 @@ def read_data(
         data_files = [x for x in osl(data_path) if x.endswith(".txt")]
 
     # generate kgs if kgs should be returned
-    kgs = datagen.generate_kgs(data_path) if get_kgs else {}
+    kgs = datagen.generate_kgs(data_path) if get_kgs else None
+    #print(kgs)
     continuity_kgs = []
     unresolved_kgs = []
 
@@ -147,10 +172,14 @@ def read_data(
 
     # create dataloaders for each error type
     continuity_dataloader = DataLoader(
-        StoryDataset(continuity_data, continuity_labels, continuity_kgs), batch_size=batch_size
+        StoryDataset(continuity_data, continuity_labels, continuity_kgs),
+        collate_fn=custom_dataloader_collate,
+        batch_size=batch_size,
     )
     unresolved_dataloader = DataLoader(
-        StoryDataset(unresolved_data, unresolved_labels, unresolved_kgs), batch_size=batch_size
+        StoryDataset(unresolved_data, unresolved_labels, unresolved_kgs),
+        collate_fn=custom_dataloader_collate,
+        batch_size=batch_size,
     )
     
     # save encoded stories into cache

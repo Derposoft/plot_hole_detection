@@ -27,12 +27,12 @@ class ContinuityBERT(nn.Module):
 
     def forward(self, x, kgs=None):
         """
-        :param x: sequence of sentence encodings from a story with shape (batch_size, seq_len, input_dim) 
-        :param kgs: knowledge graphs represented as the following map and shapes:
+        :param x: sequence of sentence encodings from a story with shape (batch_size, seq_len, input_dim)
+        :param kgs: knowledge graphs LIST, of len batch_size, each represented as the following map and shapes:
             {
-                "node_feats": (batch_size, n_nodes, kg_node_dim),
-                "edge_indices": (batch_size, 2, n_edges),
-                "edge_features": (batch_size, n_edges, kg_edge_dim)
+                "node_feats": (n_nodes, kg_node_dim),
+                "edge_indices": (2, n_edges),
+                "edge_feats": (n_edges, kg_edge_dim)
             }
         :returns: sequence of logits for each sentence
         """
@@ -45,7 +45,8 @@ class ContinuityBERT(nn.Module):
         if self.use_kg:
             x_kgs = []
             for i in range(batch_size):
-                x_kg = self.gat(kgs["node_feats"][i], kgs["edge_indices"][i], kgs["edge_features"][i])
+                if not kgs[i]: continue
+                x_kg = self.gat(kgs[i]["node_feats"], kgs[i]["edge_indices"], kgs[i]["edge_feats"])
                 x_kg = self.aggregator(x_kg)
                 x_kgs.append(x_kg)
             x_kgs = torch.stack(x_kgs, dim=0).reshape([batch_size, -1])
@@ -85,11 +86,11 @@ class UnresolvedBERT(nn.Module):
     def forward(self, x, kgs=None):
         """
         :param x: sequence of sentence encodings from a story with shape (batch_size, seq_len, input_dim) 
-        :param kgs: knowledge graphs represented as the following map and shapes:
+        :param kgs: knowledge graphs LIST, of len batch_size, each represented as the following map and shapes:
             {
-                "node_feats": (batch_size, n_nodes, kg_node_dim),
-                "edge_indices": (batch_size, 2, n_edges),
-                "edge_features": (batch_size, n_edges, kg_edge_dim)
+                "node_feats": (n_nodes, kg_node_dim),
+                "edge_indices": (2, n_edges),
+                "edge_feats": (n_edges, kg_edge_dim)
             }
         :returns: single logit determining percentage of story that was left out
         """
@@ -103,7 +104,8 @@ class UnresolvedBERT(nn.Module):
             # generate gnn output for each kg
             x_kgs = []
             for i in range(batch_size):
-                x_kg = self.gat(kgs["node_feats"][i], kgs["edge_indices"][i], kgs["edge_features"][i])
+                if not kgs[i]: continue
+                x_kg = self.gat(kgs[i]["node_feats"], kgs[i]["edge_indices"], kgs[i]["edge_feats"])
                 x_kg = self.aggregator(x_kg)
                 x_kgs.append(x_kg)
             x_kgs = torch.stack(x_kgs, dim=0)
@@ -123,11 +125,11 @@ if __name__ == "__main__":
     n_nodes = 20
     n_edges = 40
     x = torch.rand([batch_size, seq_len, 384])
-    x_kg = {
-        "node_feats": torch.rand([batch_size, n_nodes, kg_node_dim]),
-        "edge_indices": torch.randint(0, n_nodes, [batch_size, 2, n_edges]),
-        "edge_features": torch.rand([batch_size, n_edges, kg_edge_dim])
-    }
+    x_kg = [{
+        "node_feats": torch.rand([n_nodes, kg_node_dim]),
+        "edge_indices": torch.randint(0, n_nodes, [2, n_edges]),
+        "edge_feats": torch.rand([n_edges, kg_edge_dim])
+    }] * batch_size
     
     """
     test ContinuityBERT model *without* KG

@@ -1,4 +1,5 @@
 from copy import deepcopy
+from knowledge_graph.gnn_data_utils import process_extraction_results
 import nltk
 import numpy as np
 import os
@@ -6,10 +7,10 @@ from pathlib import Path
 import shutil
 from sys import platform
 from typing import List, Tuple
-#from knowledge_graph import gnn_data_utils as kg_utils
-from knowledge_graph.gnn_data_utils import process_extraction_results
+import data.utils as utils
 
-nltk.download("averaged_perceptron_tagger")
+
+nltk.download("averaged_perceptron_tagger", quiet=True)
 ROOT = Path(__file__)
 osl = os.listdir
 ospj = os.path.join
@@ -147,7 +148,6 @@ def generate_kgs(data_files_path):
     for data_file in osl(data_files_path):
         if not data_file.endswith(".txt"): continue
         shutil.copy(ospj(data_files_path, data_file), ospj(f"{kg_path}/data/input/", data_file))
-        break
 
     # 2. run commands to create knowledge graph outputs
     os.chdir(kg_path)
@@ -167,9 +167,7 @@ def generate_kgs(data_files_path):
         f"{kg_path}/data/result/"
     ]
     for folder in folders_to_cleanup:
-        for file in osl(folder):
-            if file != ".gitignore":
-                os.remove(ospj(folder, file))    
+        utils.clean_dir(folder)
 
     # 5. return generated knowledge graphs
     return kgs
