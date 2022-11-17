@@ -59,15 +59,21 @@ def encode_stories(encoder, stories: List[List[str]]):
 
 
 class StoryDataset(Dataset):
-    def __init__(self, X, y, kgs=None):
+    def __init__(self, X, y, kgs=None, kg_node_dim=100, kg_edge_dim=100):
         Dataset.__init__(self)
         self.X = X
         self.y = y
         self.kgs = kgs
+        n_nodes, n_edges = 1, 1
+        self.default_graph = {
+            "node_feats": torch.rand([n_nodes, kg_node_dim]),
+            "edge_indices": torch.randint(0, n_nodes, [2, n_edges]),
+            "edge_feats": torch.rand([n_edges, kg_edge_dim])
+        }
     def __len__(self):
         return len(self.y)
     def __getitem__(self, idx):
-        return self.X[idx], self.y[idx], self.kgs[idx] if self.kgs else {}#{"node_feats": 1, "edge_indices": 1, "edge_feats": 1}
+        return self.X[idx], self.y[idx], self.kgs[idx] if self.kgs else self.default_graph
 def custom_dataloader_collate(data):
     X, y = default_collate([(x[0], x[1]) for x in data])
     kgs = [x[2] for x in data]
@@ -80,11 +86,15 @@ def read_data(
     cache_path="data/encoded/train",
     encoder="all-MiniLM-L6-v2",
     n_stories=5,
+    n_synth=1,
     get_kgs=False,
 ):
     """
     :param batch_size: batch_size for output dataloaders
     :param data_path: location of data
+    :param cache_path: location of cached data
+    :param encoder: SentenceTransformer encoder to use to encode story sentences
+    :param n_stories: number of synthetic datapoints to create from each story
     :returns: tuple of (continuity_dataloader, unresolved_dataloader) dataloaders
 
     first check to see if cached story encodings exist for this n_stories choice at
@@ -107,14 +117,15 @@ def read_data(
 
     # ensure enough synthetic data is available, otherwise generate more
     data_files = [x for x in osl(data_path) if x.endswith(".txt")]
-    if len(data_files) < 2 * n_stories:
-        print(f"{n_stories} datapoints necessary but only {len(data_files)//2} exist. regenerating synthetic data.")
-        datagen.generate_synthetic_data(n_stories)
+    if len(data_files) < n_stories*n_synth:
+        print(f"{n_stories*n_synth} datapoints necessary but only {len(data_files)//2} exist. regenerating synthetic data.")
+        datagen.generate_synthetic_data(n_stories, n_synth)
         data_files = [x for x in osl(data_path) if x.endswith(".txt")]
 
     # generate kgs if kgs should be returned
+    if get_kgs: print("get_kgs=True found, generating KGs for stories.")
     kgs = datagen.generate_kgs(data_path) if get_kgs else None
-    #print(kgs)
+    print("KGS", kgs)
     continuity_kgs = []
     unresolved_kgs = []
 
@@ -137,6 +148,7 @@ def read_data(
                 if get_kgs: unresolved_kgs.append(kgs[data_file])
 
     # if a specific dataset size is requested, cut returned data down to that size
+    """
     if n_stories:
         def cut_data_to_first_n(data, n): return data[:min(len(data), n)]
         continuity_data = cut_data_to_first_n(continuity_data, n_stories)
@@ -146,6 +158,7 @@ def read_data(
         if get_kgs:
             continuity_kgs = cut_data_to_first_n(continuity_kgs, n_stories)
             unresolved_kgs = cut_data_to_first_n(unresolved_kgs, n_stories)
+    """
 
     # encode all data file sentences using encoder
     print("encoding stories...")

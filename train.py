@@ -64,8 +64,9 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_stories", default=5, type=int, help="number of synthetic datapoints to use")
-    parser.add_argument("--train_ratio", default=0.8, type=float, help="train ratio")
+    parser.add_argument("--n_stories", default=1, type=int, help="number of stories to use (for both test and train)")
+    parser.add_argument("--n_synth", default=1, type=int, help="number of synthetic datapoints to use per story")
+    #parser.add_argument("--train_ratio", default=0.8, type=float, help="train ratio")
     parser.add_argument("--batch_size", default=8, type=int)
     parser.add_argument("--n_heads", default=16, type=int)
     parser.add_argument("--n_epochs", default=10, type=int)
@@ -92,22 +93,25 @@ if __name__ == "__main__":
     n_heads = config.n_heads
     lr = config.lr
     n_stories = config.n_stories
+    n_synth = config.n_synth
     n_epochs = config.n_epochs
-    train_ratio = config.train_ratio
+    train_ratio = 0.5#config.train_ratio
     PR_THRESHOLD = config.pr_threshold
 
     # read data
     print("reading data...")
     continuity_train, unresolved_train = utils.read_data(
         batch_size=batch_size,
-        n_stories=int(n_stories*train_ratio),
+        n_stories=n_stories,
+        n_synth=n_synth,
         data_path="data/synthetic/train",
         cache_path="data/encoded/train",
         get_kgs=use_kg,
     )
     continuity_test, unresolved_test = utils.read_data(
         batch_size=batch_size,
-        n_stories=int(n_stories*(1-train_ratio)),
+        n_stories=n_stories,
+        n_synth=n_synth,
         data_path="data/synthetic/test",
         cache_path="data/encoded/test",
         get_kgs=use_kg,
