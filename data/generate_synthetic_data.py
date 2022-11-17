@@ -117,17 +117,17 @@ def write_synthetic_datapoint_to_file(X, y, path, plot_hole_type):
         synthetic_document_f.write(X[1:])
 
 
-def generate_synthetic_data(n=10, train_ratio=0.8):
-    dataset = get_datafiles()
+def generate_synthetic_data(n_stories=10, n_synth=1, train_ratio=0.5):
+    dataset = get_datafiles()[:2*n_stories]
     n_docs = len(dataset)
     for doc_idx in range(len(dataset)):
         train_test_prefix = "train/" if doc_idx < n_docs*train_ratio else "test/"
         doc_path = dataset[doc_idx]
         with open(doc_path, "r", encoding="utf8") as document_f:
             document = " ".join([x.strip() for x in document_f.readlines()])
-            X_continuity, y_continuity = generate_continuity_errors(document, n)
-            X_unresolved, y_unresolved = generate_unresolvedstory_errors(document, n)
-            for i in range(n):
+            X_continuity, y_continuity = generate_continuity_errors(document, n_synth)
+            X_unresolved, y_unresolved = generate_unresolvedstory_errors(document, n_synth)
+            for i in range(n_synth):
                 if i >= len(X_continuity) or i >= len(X_unresolved): break
                 doc_name = str(doc_path).split("\\" if platform=="win32" else "/")[-1].split(".")[0]
                 continuity_path = ROOT.parent / f"synthetic/{train_test_prefix}synthetic_{doc_name}_continuity{i}.txt"
@@ -151,7 +151,7 @@ def generate_kgs(data_files_path):
 
     # 2. run commands to create knowledge graph outputs
     os.chdir(kg_path)
-    os.system(f"python3 knowledge_graph.py stanford")
+    os.system(f"python3 knowledge_graph.py nltk") # "optimized stanford" setting in future?
     os.system(f"python3 relation_extractor.py")
     os.system(f"python3 create_structured_csv.py")
     os.chdir("..")
