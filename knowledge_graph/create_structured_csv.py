@@ -50,9 +50,9 @@ def main():
         processed_pd = pd.DataFrame(list(triplet),columns=['Type','Entity 1','Relationship','Type', 'Entity2'])
         processed_pd.to_csv('./data/result/' + file.split("/")[-1].split(".")[0] + '.csv', encoding='utf-8', index=False)
 
-        print("Processed " + file.split("/")[-1])
+        #print("Processed " + file.split("/")[-1])
 
-    print("Files processed and saved")
+    #print("Files processed and saved")
 
 if __name__ == '__main__':
     main()

@@ -59,17 +59,16 @@ def encode_stories(encoder, stories: List[List[str]]):
 
 class StoryDataset(Dataset):
     default_graph = None
-    """
-    def __init__(self, X, y, kgs=None, kg_node_dim=100, kg_edge_dim=100):
+    def __init__(self, X, y, kgs=None):
         Dataset.__init__(self)
         self.X = X
         self.y = y
         self.kgs = kgs
-    """
     def __len__(self):
         return len(self.y)
     def __getitem__(self, idx):
-        kg_node_dim, kg_edge_dim = 100, 100
+        import knowledge_graph.gnn_data_utils as kgutils
+        kg_node_dim, kg_edge_dim = kgutils.KG_NODE_DIM, kgutils.KG_EDGE_DIM
         n_nodes, n_edges = 1, 1
         kg = {
             "node_feats": torch.rand([n_nodes, kg_node_dim]),

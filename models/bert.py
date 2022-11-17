@@ -45,6 +45,8 @@ class ContinuityBERT(nn.Module):
         if self.use_kg:
             x_kgs = []
             for i in range(batch_size):
+                print(kgs[i]["node_feats"].shape, kgs[i]["edge_indices"].shape, kgs[i]["edge_feats"].shape)
+                print(kgs[i]["edge_indices"])
                 x_kg = self.gat(kgs[i]["node_feats"], kgs[i]["edge_indices"], kgs[i]["edge_feats"])
                 x_kg = self.aggregator(x_kg)
                 x_kgs.append(x_kg)

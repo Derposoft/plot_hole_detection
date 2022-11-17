@@ -35,7 +35,7 @@ def get_node_features(adj_dict, all_spacy_entities, spacy_entities_to_index_map)
             else:
                 visited.add(adj_entity)
 
-            per_node_vector = [0]*len(all_spacy_entities)
+            per_node_vector = [0]*KG_NODE_DIM#len(all_spacy_entities)
             per_node_vector[spacy_entities_to_index_map[type_]]=1
             nodes_features.append(per_node_vector)
     
@@ -103,7 +103,7 @@ def process_extraction_results():
     all_spacy_entities.append('O')
     paths = glob.glob("./knowledge_graph/data/result/*.csv")
     spacy_entities_to_index_map = {v:k for k,v in enumerate(all_spacy_entities)}
-    model = SentenceTransformer(SENTENCE_TRANSFORMER_MODEL)
+    model = SentenceTransformer(SENTENCE_TRANFORMER_MODEL)
     kgs = {}
     for path in paths:
         node_features, edges_list, edge_features = process_csv(path, all_spacy_entities, spacy_entities_to_index_map, model)
