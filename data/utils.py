@@ -118,90 +118,78 @@ def read_data(
     cache_files = osl(cache_path)
     if cache_file in cache_files:
         with open(ospj(cache_path, cache_file), "rb") as f:
-            return pkl.load(f)
-
-    # ensure enough synthetic data is available, otherwise generate more
-    import data.generate_synthetic_data as datagen
-    data_files = [x for x in osl(data_path) if x.endswith(".txt")]
-    if len(data_files) < n_stories*n_synth:
-        print(f"{n_stories*n_synth} datapoints necessary but only {len(data_files)//2} exist. regenerating synthetic data.")
-        datagen.generate_synthetic_data(n_stories, n_synth)
+            continuity_dataset, unresolved_dataset = pkl.load(f)
+    else:
+        # ensure enough synthetic data is available, otherwise generate more
+        import data.generate_synthetic_data as datagen
         data_files = [x for x in osl(data_path) if x.endswith(".txt")]
+        if len(data_files) < n_stories*n_synth:
+            print(f"{n_stories*n_synth} datapoints necessary but only {len(data_files)//2} exist. regenerating synthetic data.")
+            datagen.generate_synthetic_data(n_stories, n_synth)
+            data_files = [x for x in osl(data_path) if x.endswith(".txt")]
 
-    # generate kgs if kgs should be returned
-    if get_kgs: print("get_kgs=True found, generating KGs for stories.")
-    kgs = datagen.generate_kgs(data_path) if get_kgs else None
-    #print("KGS", kgs)
-    continuity_kgs = []
-    unresolved_kgs = []
+        # generate kgs if kgs should be returned
+        if get_kgs: print("get_kgs=True found, generating KGs for stories.")
+        kgs = datagen.generate_kgs(data_path) if get_kgs else None
+        continuity_kgs = []
+        unresolved_kgs = []
 
-    # parse all data files in data_path and separate them by error type
-    continuity_data = []
-    continuity_labels = []
-    unresolved_data = []
-    unresolved_labels = []
-    for data_file in tqdm(data_files):
-        with open(ospj(data_path, data_file), "r") as f:
-            lines = f.readlines()
-            problem, label = lines[0].split()
-            if problem == "continuity":
-                continuity_data.append(lines[1:])
-                continuity_labels.append(int(label))
-                if get_kgs: continuity_kgs.append(kgs[data_file])
-            elif problem == "unresolved":
-                unresolved_data.append(lines[1:])
-                unresolved_labels.append(float(label))
-                if get_kgs: unresolved_kgs.append(kgs[data_file])
+        # parse all data files in data_path and separate them by error type
+        continuity_data = []
+        continuity_labels = []
+        unresolved_data = []
+        unresolved_labels = []
+        for data_file in tqdm(data_files):
+            with open(ospj(data_path, data_file), "r") as f:
+                lines = f.readlines()
+                problem, label = lines[0].split()
+                if problem == "continuity":
+                    continuity_data.append(lines[1:])
+                    continuity_labels.append(int(label))
+                    if get_kgs: continuity_kgs.append(kgs[data_file])
+                elif problem == "unresolved":
+                    unresolved_data.append(lines[1:])
+                    unresolved_labels.append(float(label))
+                    if get_kgs: unresolved_kgs.append(kgs[data_file])
 
-    # if a specific dataset size is requested, cut returned data down to that size
-    """
-    if n_stories:
-        def cut_data_to_first_n(data, n): return data[:min(len(data), n)]
-        continuity_data = cut_data_to_first_n(continuity_data, n_stories)
-        continuity_labels = cut_data_to_first_n(continuity_labels, n_stories)
-        unresolved_data = cut_data_to_first_n(unresolved_data, n_stories)
-        unresolved_labels = cut_data_to_first_n(unresolved_labels, n_stories)
-        if get_kgs:
-            continuity_kgs = cut_data_to_first_n(continuity_kgs, n_stories)
-            unresolved_kgs = cut_data_to_first_n(unresolved_kgs, n_stories)
-    """
+        # encode all data file sentences using encoder
+        print("encoding stories...")
+        encoder = create_sentence_encoder()
+        continuity_data = encode_stories(encoder, continuity_data)
+        unresolved_data = encode_stories(encoder, unresolved_data)
 
-    # encode all data file sentences using encoder
-    print("encoding stories...")
-    encoder = create_sentence_encoder()
-    continuity_data = encode_stories(encoder, continuity_data)
-    unresolved_data = encode_stories(encoder, unresolved_data)
+        # pad all stories to meet the length of the longest story
+        longest_story_length = max([len(story) for story in continuity_data])
+        continuity_data = [
+            F.pad(story, (0, 0, 0, longest_story_length - len(story)))
+            for story in continuity_data
+        ]
+        unresolved_data = [
+            F.pad(story, (0, 0, 0, longest_story_length - len(story)))
+            for story in unresolved_data
+        ]
+        continuity_data = torch.stack(continuity_data)
+        unresolved_data = torch.stack(unresolved_data)
 
-    # pad all stories to meet the length of the longest story
-    longest_story_length = max([len(story) for story in continuity_data])
-    continuity_data = [
-        F.pad(story, (0, 0, 0, longest_story_length - len(story)))
-        for story in continuity_data
-    ]
-    unresolved_data = [
-        F.pad(story, (0, 0, 0, longest_story_length - len(story)))
-        for story in unresolved_data
-    ]
-    continuity_data = torch.stack(continuity_data)
-    unresolved_data = torch.stack(unresolved_data)
+        # 1-hot encode continuity error labels, turn labels into tensors
+        continuity_labels = torch.eye(longest_story_length)[continuity_labels]
+        unresolved_labels = torch.FloatTensor(unresolved_labels)
 
-    # 1-hot encode continuity error labels, turn labels into tensors
-    continuity_labels = torch.eye(longest_story_length)[continuity_labels]
-    unresolved_labels = torch.FloatTensor(unresolved_labels)
+        # save encoded stories into cache
+        continuity_dataset = StoryDataset(continuity_data, continuity_labels, continuity_kgs)
+        unresolved_dataset = StoryDataset(unresolved_data, unresolved_labels, unresolved_kgs)
+        with open(ospj(cache_path, cache_file), "wb") as f:
+            pkl.dump((continuity_dataset, unresolved_dataset), f)
 
     # create dataloaders for each error type
     continuity_dataloader = DataLoader(
-        StoryDataset(continuity_data, continuity_labels, continuity_kgs),
+        continuity_dataset,
         collate_fn=custom_dataloader_collate,
         batch_size=batch_size,
     )
     unresolved_dataloader = DataLoader(
-        StoryDataset(unresolved_data, unresolved_labels, unresolved_kgs),
+        unresolved_dataset,
         collate_fn=custom_dataloader_collate,
         batch_size=batch_size,
     )
-    
-    # save encoded stories into cache
-    with open(ospj(cache_path, cache_file), "wb") as f:
-        pkl.dump((continuity_dataloader, unresolved_dataloader), f)
     return continuity_dataloader, unresolved_dataloader
