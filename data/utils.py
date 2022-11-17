@@ -114,7 +114,7 @@ def read_data(
     """
     # check if cached stories exist for this n_stories
     kg_suffix = "_kg" if get_kgs else ""
-    cache_file = f"{n_stories}_stories_encoded{kg_suffix}.pkl"
+    cache_file = f"{n_stories}_{n_synth}_stories_encoded{kg_suffix}.pkl"
     cache_files = osl(cache_path)
     if cache_file in cache_files:
         with open(ospj(cache_path, cache_file), "rb") as f:

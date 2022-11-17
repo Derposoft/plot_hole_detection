@@ -65,10 +65,10 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_stories", default=1, type=int, help="number of stories to use (for both test and train)")
-    parser.add_argument("--n_synth", default=1, type=int, help="number of synthetic datapoints to use per story")
+    parser.add_argument("--n_stories", default=100, type=int, help="number of stories to use (for both test and train)")
+    parser.add_argument("--n_synth", default=10, type=int, help="number of synthetic datapoints to use per story")
     #parser.add_argument("--train_ratio", default=0.8, type=float, help="train ratio")
-    parser.add_argument("--batch_size", default=8, type=int)
+    parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--n_heads", default=16, type=int)
     parser.add_argument("--n_epochs", default=10, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
