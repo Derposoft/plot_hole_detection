@@ -69,11 +69,12 @@ class StoryDataset(Dataset):
     def __getitem__(self, idx):
         import knowledge_graph.gnn_data_utils as kgutils
         kg_node_dim, kg_edge_dim = kgutils.KG_NODE_DIM, kgutils.KG_EDGE_DIM
+        if not self.kgs: kg_node_dim, kg_edge_dim = 1, 1
         n_nodes, n_edges = 1, 1
         kg = {
-            "node_feats": torch.rand([n_nodes, kg_node_dim]),
+            "node_feats": torch.zeros([n_nodes, kg_node_dim]),
             "edge_indices": torch.zeros((2, 1)).long(),
-            "edge_feats": torch.rand([n_edges, kg_edge_dim])
+            "edge_feats": torch.zeros([n_edges, kg_edge_dim])
         }
         if self.kgs and len(self.kgs[idx]["node_feats"] > 0):
             kg = self.kgs[idx]

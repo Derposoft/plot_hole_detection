@@ -23,6 +23,10 @@ def test(*, model, test_data, metrics="f1", verbose=True):
     y_preds = []
     y_true = []
     for _, (X, y, kgs) in enumerate(test_data):
+        X.to(device)
+        y.to(device)
+        for kg in kgs:
+            for k in kg: kg[k].to(device)
         with torch.no_grad():
             y_preds.append(model(X, kgs))
         y_true.append(y)
@@ -54,6 +58,10 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
         if verbose:
             print(f"starting epoch {epoch}")
         for i, (X, y, kgs) in enumerate(train_data):
+            X.to(device)
+            y.to(device)
+            for kg in kgs:
+                for k in kg: kg[k].to(device)
             y_hat = model(X, kgs)
             loss = criterion(y_hat, y)
             loss.backward()
@@ -69,7 +77,7 @@ def parse_args():
     parser.add_argument("--n_synth", default=10, type=int, help="number of synthetic datapoints to use per story")
     #parser.add_argument("--train_ratio", default=0.8, type=float, help="train ratio")
     parser.add_argument("--batch_size", default=64, type=int)
-    parser.add_argument("--n_heads", default=16, type=int)
+    parser.add_argument("--n_heads", default=2, type=int)
     parser.add_argument("--n_epochs", default=10, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--pr_threshold", default=0.5, type=float)
