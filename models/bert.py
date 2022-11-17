@@ -45,8 +45,6 @@ class ContinuityBERT(nn.Module):
         if self.use_kg:
             x_kgs = []
             for i in range(batch_size):
-                #print(kgs[i])
-                if not kgs[i] or kgs[i] == {} or len(kgs[i]["node_feats"]) == 0: continue
                 x_kg = self.gat(kgs[i]["node_feats"], kgs[i]["edge_indices"], kgs[i]["edge_feats"])
                 x_kg = self.aggregator(x_kg)
                 x_kgs.append(x_kg)
@@ -105,7 +103,6 @@ class UnresolvedBERT(nn.Module):
             # generate gnn output for each kg
             x_kgs = []
             for i in range(batch_size):
-                if not kgs[i]: continue
                 x_kg = self.gat(kgs[i]["node_feats"], kgs[i]["edge_indices"], kgs[i]["edge_feats"])
                 x_kg = self.aggregator(x_kg)
                 x_kgs.append(x_kg)

@@ -1,4 +1,3 @@
-import data.generate_synthetic_data as datagen
 import os
 import pickle as pkl
 from sentence_transformers import SentenceTransformer
@@ -59,21 +58,27 @@ def encode_stories(encoder, stories: List[List[str]]):
 
 
 class StoryDataset(Dataset):
+    default_graph = None
+    """
     def __init__(self, X, y, kgs=None, kg_node_dim=100, kg_edge_dim=100):
         Dataset.__init__(self)
         self.X = X
         self.y = y
         self.kgs = kgs
-        n_nodes, n_edges = 1, 1
-        self.default_graph = {
-            "node_feats": torch.rand([n_nodes, kg_node_dim]),
-            "edge_indices": torch.randint(0, n_nodes, [2, n_edges]),
-            "edge_feats": torch.rand([n_edges, kg_edge_dim])
-        }
+    """
     def __len__(self):
         return len(self.y)
     def __getitem__(self, idx):
-        return self.X[idx], self.y[idx], self.kgs[idx] if self.kgs else self.default_graph
+        kg_node_dim, kg_edge_dim = 100, 100
+        n_nodes, n_edges = 1, 1
+        kg = {
+            "node_feats": torch.rand([n_nodes, kg_node_dim]),
+            "edge_indices": torch.zeros((2, 1)).long(),
+            "edge_feats": torch.rand([n_edges, kg_edge_dim])
+        }
+        if self.kgs and len(self.kgs[idx]["node_feats"] > 0):
+            kg = self.kgs[idx]
+        return self.X[idx], self.y[idx], kg
 def custom_dataloader_collate(data):
     X, y = default_collate([(x[0], x[1]) for x in data])
     kgs = [x[2] for x in data]
@@ -116,6 +121,7 @@ def read_data(
             return pkl.load(f)
 
     # ensure enough synthetic data is available, otherwise generate more
+    import data.generate_synthetic_data as datagen
     data_files = [x for x in osl(data_path) if x.endswith(".txt")]
     if len(data_files) < n_stories*n_synth:
         print(f"{n_stories*n_synth} datapoints necessary but only {len(data_files)//2} exist. regenerating synthetic data.")
@@ -125,7 +131,7 @@ def read_data(
     # generate kgs if kgs should be returned
     if get_kgs: print("get_kgs=True found, generating KGs for stories.")
     kgs = datagen.generate_kgs(data_path) if get_kgs else None
-    print("KGS", kgs)
+    #print("KGS", kgs)
     continuity_kgs = []
     unresolved_kgs = []
 

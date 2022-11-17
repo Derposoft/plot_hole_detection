@@ -7,6 +7,12 @@ import en_core_web_sm
 import numpy as np
 from collections import defaultdict
 from sentence_transformers import SentenceTransformer
+import data.utils as utils
+
+SENTENCE_TRANFORMER_MODEL = 'all-MiniLM-L6-v2'
+KG_NODE_DIM = 100
+KG_EDGE_DIM = utils.SENTENCE_ENCODER_DIM[SENTENCE_TRANFORMER_MODEL]
+
 
 def get_node_features(adj_dict, all_spacy_entities, spacy_entities_to_index_map):
     nodes_features = list()
@@ -17,7 +23,7 @@ def get_node_features(adj_dict, all_spacy_entities, spacy_entities_to_index_map)
         else:
             visited.add(entity)
 
-        per_node_vector = [0]*len(all_spacy_entities)
+        per_node_vector = [0]*KG_NODE_DIM#len(all_spacy_entities)
         per_node_vector[spacy_entities_to_index_map[adj_dict[entity]['Type']]]=1
         nodes_features.append(per_node_vector)
 
@@ -97,7 +103,7 @@ def process_extraction_results():
     all_spacy_entities.append('O')
     paths = glob.glob("./knowledge_graph/data/result/*.csv")
     spacy_entities_to_index_map = {v:k for k,v in enumerate(all_spacy_entities)}
-    model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+    model = SentenceTransformer(SENTENCE_TRANSFORMER_MODEL)
     kgs = {}
     for path in paths:
         node_features, edges_list, edge_features = process_csv(path, all_spacy_entities, spacy_entities_to_index_map, model)

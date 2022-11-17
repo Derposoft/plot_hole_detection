@@ -6,6 +6,7 @@ from sklearn.metrics import f1_score, mean_squared_error
 import torch
 import torch.nn as nn
 from torch.optim import Adam
+import knowledge_graph.gnn_data_utils as kgutils
 device = "cuda" if torch.cuda.is_available() else "cpu"
 PR_THRESHOLD = None
 
@@ -97,6 +98,8 @@ if __name__ == "__main__":
     n_epochs = config.n_epochs
     train_ratio = 0.5#config.train_ratio
     PR_THRESHOLD = config.pr_threshold
+    kg_node_dim = kgutils.KG_NODE_DIM
+    kg_edge_dim = kgutils.KG_EDGE_DIM
 
     # read data
     print("reading data...")
@@ -121,15 +124,22 @@ if __name__ == "__main__":
     # create models and training artifacts
     print("creating models and training artifacts...")
     if "continuity" in model_type:
-        model = bert.ContinuityBERT(n_heads=n_heads, input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type], use_kg=use_kg)
+        model_class = bert.ContinuityBERT
         train_data, test_data = continuity_train, continuity_test
         criterion = nn.CrossEntropyLoss()
         metrics = "f1"
     else:
-        model = bert.UnresolvedBERT(n_heads=n_heads, input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type], use_kg=use_kg)
+        model_class = bert.UnresolvedBERT
         train_data, test_data = unresolved_train, unresolved_test
         criterion = nn.MSELoss()
         metrics = "mse"
+    model = model_class(
+        n_heads=n_heads,
+        input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type],
+        use_kg=use_kg,
+        kg_node_dim=kg_node_dim,
+        kg_edge_dim=kg_edge_dim,
+    )
     opt = Adam(model.parameters(), lr=lr)
     model.to(device)
     print("done.")
