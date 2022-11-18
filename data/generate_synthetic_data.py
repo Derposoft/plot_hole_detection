@@ -142,12 +142,16 @@ def generate_synthetic_data(n_stories=10, n_synth=1, train_ratio=0.5):
                 )
 
 
-def generate_kgs(data_files_path):
+def generate_kgs(data_files_path, data_files=None):
     # 1. copy all data_files to knowledge_graph/data/input/
     kg_path = "./knowledge_graph"
-    for data_file in osl(data_files_path):
-        if not data_file.endswith(".txt"): continue
-        shutil.copy(ospj(data_files_path, data_file), ospj(f"{kg_path}/data/input/", data_file))
+    if not data_files:
+        for data_file in osl(data_files_path):
+            if not data_file.endswith(".txt"): continue
+            shutil.copy(ospj(data_files_path, data_file), ospj(f"{kg_path}/data/input/", data_file))
+    else:
+        for data_file in data_files:
+            shutil.copy(ospj(data_files_path, data_file), ospj(f"{kg_path}/data/input/", data_file))
 
     # 2. run commands to create knowledge graph outputs
     os.chdir(kg_path)
