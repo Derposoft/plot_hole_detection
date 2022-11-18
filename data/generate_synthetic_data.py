@@ -1,5 +1,5 @@
 from copy import deepcopy
-#from knowledge_graph.gnn_data_utils import process_extraction_results
+from knowledge_graph.gnn_data_utils import process_extraction_results
 import nltk
 import numpy as np
 import os
@@ -7,11 +7,12 @@ from pathlib import Path
 import shutil
 from sys import platform
 from typing import List, Tuple
-#import data.utils as utils
+import data.utils as utils
 
 
 nltk.download("averaged_perceptron_tagger", quiet=True)
 ROOT = Path(__file__)
+RAW = Path(ROOT, "/raw")
 osl = os.listdir
 ospj = os.path.join
 
@@ -117,7 +118,7 @@ def write_synthetic_datapoint_to_file(X, y, path, plot_hole_type):
         synthetic_document_f.write(X[1:])
 
 
-def generate_synthetic_data(n_stories=3041, n_synth=1, train_ratio=0.5):
+def generate_synthetic_data(n_stories=len(RAW.iterdir()), n_synth=1, train_ratio=0.5):
     dataset = get_datafiles()[:2*n_stories]
     n_docs = len(dataset)
     for doc_idx in range(len(dataset)):
