@@ -144,7 +144,8 @@ def main(args):
     if verbose:
         debug_print('filename = {}'.format(filename), verbose)
     entities_relations = stanford_ie(filename, verbose, generate_graphviz)
-    print('\n'.join([' ,'.join(a) for a in entities_relations]))
+    # CHANGE: replace commas in case they make it through (really should use pandas but whatever)
+    print('\n'.join([' ,'.join([x.replace(",", " ") for x in a]) for a in entities_relations]))
 
 
 if __name__ == '__main__':

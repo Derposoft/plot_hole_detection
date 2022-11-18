@@ -25,7 +25,7 @@ def main():
         for str in file_name_list[1:]:
             file_name += '_'
             file_name += str
-            print(file_name)
+            #print(file_name)
 
         df = pd.read_csv(curr_dir +"/data/output/kg/"+file_name+".txt-out.csv")
         
