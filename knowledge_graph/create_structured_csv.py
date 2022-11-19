@@ -2,6 +2,7 @@ import pickle
 import pandas as pd
 import os
 import glob
+from sys import platform
 
 def main():
 
@@ -26,8 +27,10 @@ def main():
             file_name += '_'
             file_name += str
             #print(file_name)
-
-        df = pd.read_csv(curr_dir +"/data/output/kg/"+file_name+".txt-out.csv")
+        fpath = "/data/output/kg/"+file_name+".txt-out.csv"
+        if platform == "win32":
+            fpath = fpath.replace("/", "\\")
+        df = pd.read_csv(curr_dir + fpath)
         
         #parse every row present in the intermediate csv file
         triplet = set()

@@ -11,6 +11,8 @@ import data.utils as utils
 
 
 nltk.download("averaged_perceptron_tagger", quiet=True)
+nltk.download("wordnet", quiet=True)
+nltk.download("omw-1.4", quiet=True)
 ROOT = Path(__file__)
 osl = os.listdir
 ospj = os.path.join
@@ -155,9 +157,9 @@ def generate_kgs(data_files_path, data_files=None):
 
     # 2. run commands to create knowledge graph outputs
     os.chdir(kg_path)
-    c_kg = os.system(f"python3 knowledge_graph.py nltk") # "optimized stanford" setting in future?
-    c_re = os.system(f"python3 relation_extractor.py")
-    c_csv = os.system(f"python3 create_structured_csv.py")
+    c_kg = os.system(f"python knowledge_graph.py nltk") # "optimized stanford" setting in future?
+    c_re = os.system(f"python relation_extractor.py")
+    c_csv = os.system(f"python create_structured_csv.py")
     assert not (c_kg or c_re or c_csv), "knowledge graph creation failed; refer to above errors"
     os.chdir("..")
 

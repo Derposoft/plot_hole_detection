@@ -16,9 +16,11 @@ import re
 # For Coreference resolution
 import json
 from stanfordcorenlp import StanfordCoreNLP
+from sys import platform
 
 nltk.download('maxent_ne_chunker', quiet=True)
 nltk.download('words', quiet=True)
+nltk.download('punkt', quiet=True)
 
 class StanfordNER:
     def __init__(self):
@@ -292,7 +294,10 @@ def main():
                 execute_coref_resol = True
         
         # Save named entities
-        op_pickle_filename = ner_pickles_op + "named_entity_" + file.split('/')[-1].split('.')[0] + ".pickle"
+        fname = file.split('/')[-1].split('.')[0]
+        if platform == "win32":
+            fname = fname.split('\\')[-1]
+        op_pickle_filename = ner_pickles_op + "named_entity_" + fname + ".pickle"
         with open(op_pickle_filename,"wb") as f:
             pickle.dump(named_entities, f)
 
@@ -300,7 +305,10 @@ def main():
             print("\nResolving Coreferences... (This may take a while)\n")
             doc = resolve_coreferences(doc,stanford_core_nlp_path,named_entities,verbose)
 
-        op_filename = coref_resolved_op + file.split('/')[-1]
+        if platform == "win32":
+            op_filename = coref_resolved_op + file.split('/')[-1].split('\\')[-1]
+        else:
+            op_filename = coref_resolved_op + file.split('/')[-1]
         with open(op_filename,"w+") as f:
             f.write(doc)
 main()
