@@ -2,7 +2,7 @@ import data.utils as utils
 import sys
 
 # ensure data deletion should happen
-ans = input("are you sure you want to delete all data?")
+ans = input("are you sure you want to delete all data? ([Y]/n): ")
 if "n" in ans.lower(): sys.exit()
 
 # delete data
