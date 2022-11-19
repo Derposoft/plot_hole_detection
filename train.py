@@ -59,6 +59,7 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
     for epoch in range(epochs):
         start_time = time()
         tot_loss = 0
+        i = 0
         for i, (X, y, kgs) in enumerate(train_data):
             X, y = X.to(device), y.to(device)
             for kg in kgs:
@@ -68,9 +69,12 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
             tot_loss += loss.item()
             loss.backward()
             opt.step()
-        results = test(model=model, test_data=test_data, metrics=metrics, verbosity=verbosity)
+        tot_loss /= i+1
+        results = test(model=model, test_data=test_data, metrics=metrics, verbosity=0)
         if verbosity > 0:
-            print(f"epoch {epoch} time: {time()-start_time:0.3}s, loss: {tot_loss:0.4}, {metrics}: {results:0.5}")
+            print(
+                f"epoch {epoch} time: {time()-start_time:0.3}s, train {metrics}: {tot_loss:0.4}, test {metrics}: {results:0.5}"
+            )
 
 
 def parse_args():
@@ -80,6 +84,7 @@ def parse_args():
     #parser.add_argument("--train_ratio", default=0.8, type=float, help="train ratio")
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--n_heads", default=8, type=int)
+    parser.add_argument("--hidden_dim", default=20, type=int)
     parser.add_argument("--n_epochs", default=10, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
     parser.add_argument("--pr_threshold", default=0.02, type=float)
@@ -102,6 +107,7 @@ if __name__ == "__main__":
     use_kg = "kg" in model_type
     batch_size = config.batch_size
     n_heads = config.n_heads
+    hidden_dim = config.hidden_dim
     lr = config.lr
     n_stories = config.n_stories
     n_synth = config.n_synth
@@ -145,6 +151,7 @@ if __name__ == "__main__":
         metrics = "mse"
     model = model_class(
         n_heads=n_heads,
+        hidden_dim=hidden_dim,
         input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type],
         use_kg=use_kg,
         kg_node_dim=kg_node_dim,
