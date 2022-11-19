@@ -2,6 +2,7 @@ import argparse
 from data import utils
 from models import bert
 import numpy as np
+import random
 from sklearn.metrics import f1_score, mean_squared_error
 import torch
 import torch.nn as nn
@@ -10,6 +11,16 @@ import knowledge_graph.gnn_data_utils as kgutils
 from time import time
 device = "cuda" if torch.cuda.is_available() else "cpu"
 PR_THRESHOLD = None
+
+
+def set_seed(seed):
+    """
+    :param seed: seed to use for reproducibility purposes
+    :returns: None. sets seed as per https://pytorch.org/docs/stable/notes/randomness.html
+    """
+    torch.manual_seed(seed)
+    random.seed(seed)
+    np.random.seed(seed)
 
 
 def test(*, model, test_data, metrics="f1", verbosity=10):
@@ -59,7 +70,6 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
     for epoch in range(epochs):
         start_time = time()
         tot_loss = 0
-        i = 0
         for i, (X, y, kgs) in enumerate(train_data):
             X, y = X.to(device), y.to(device)
             for kg in kgs:
@@ -69,11 +79,11 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
             tot_loss += loss.item()
             loss.backward()
             opt.step()
-        tot_loss /= i+1
+        tot_loss /= len(train_data)
         results = test(model=model, test_data=test_data, metrics=metrics, verbosity=0)
         if verbosity > 0:
             print(
-                f"epoch {epoch} time: {time()-start_time:0.3}s, train {metrics}: {tot_loss:0.4}, test {metrics}: {results:0.5}"
+                f"epoch {epoch} time: {time()-start_time:0.3}s, train loss: {tot_loss:0.4}, test {metrics}: {results:0.5}"
             )
 
 
@@ -93,6 +103,7 @@ def parse_args():
         choices=["all-MiniLM-L6-v2", "paraphrase-albert-small-v2"])
     parser.add_argument("--model_type", default="continuity_bert", type=str,
         choices=["continuity_bert", "unresolved_bert", "continuity_bert_kg", "unresolved_bert_kg"])
+    parser.add_argument("--seed", default=0, type=int)
     config = parser.parse_args()
     return config
 
@@ -103,6 +114,7 @@ if __name__ == "__main__":
     """
     ### hyperparameters ###
     config = parse_args()
+    set_seed(config.seed)
     encoder_type = config.encoder_type
     model_type = config.model_type
     use_kg = "kg" in model_type
