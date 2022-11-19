@@ -13,13 +13,19 @@ class ContinuityBERT(nn.Module):
     baseline model which finds Continuity Errors in plots --
     i.e., which sentences are plot holes and which ones are not.
     """
-    def __init__(self, n_heads=16, input_dim=384, hidden_dim=20, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
+    def __init__(self, n_heads=16, n_layers=6, input_dim=384, hidden_dim=20, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
         nn.Module.__init__(self)
         # embed into hidden dim
         full_hidden_dim = hidden_dim*n_heads
         self.embedder = nn.Linear(input_dim, full_hidden_dim)
         # decider decides which sentences are continuity errors
-        self.decider = nn.Transformer(nhead=n_heads, d_model=full_hidden_dim, batch_first=True)
+        self.decider = nn.Transformer(
+            nhead=n_heads,
+            d_model=full_hidden_dim,
+            batch_first=True,
+            num_encoder_layers=n_layers,
+            num_decoder_layers=n_layers,
+        )
         # GAT which will use KG
         self.use_kg = use_kg
         self.gat = GATv2Conv(in_channels=kg_node_dim, out_channels=kg_node_dim, edge_dim=kg_edge_dim)
@@ -76,13 +82,19 @@ class UnresolvedBERT(nn.Module):
     i.e., whether or not the story was cut short before the storyline 
     was resolved.
     """
-    def __init__(self, n_heads=16, input_dim=384, hidden_dim=20, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
+    def __init__(self, n_heads=16, n_layers=6, input_dim=384, hidden_dim=20, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
         nn.Module.__init__(self)
         # embed into hidden dim
         full_hidden_dim = hidden_dim*n_heads
         self.embedder = nn.Linear(input_dim, full_hidden_dim)
         # decider decides which sentences are most important in deciding how "incomplete" story is
-        self.decider = nn.Transformer(nhead=n_heads, d_model=full_hidden_dim, batch_first=True)
+        self.decider = nn.Transformer(
+            nhead=n_heads,
+            d_model=full_hidden_dim,
+            batch_first=True,
+            num_encoder_layers=n_layers,
+            num_decoder_layers=n_layers,
+        )
         # GAT which will use KG
         self.use_kg = use_kg
         self.gat = GATv2Conv(in_channels=kg_node_dim, out_channels=kg_node_dim, edge_dim=kg_edge_dim)

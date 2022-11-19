@@ -84,6 +84,7 @@ def parse_args():
     #parser.add_argument("--train_ratio", default=0.8, type=float, help="train ratio")
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--n_heads", default=8, type=int)
+    parser.add_argument("--n_layers", default=6, type=int)
     parser.add_argument("--hidden_dim", default=20, type=int)
     parser.add_argument("--n_epochs", default=10, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
@@ -107,6 +108,7 @@ if __name__ == "__main__":
     use_kg = "kg" in model_type
     batch_size = config.batch_size
     n_heads = config.n_heads
+    n_layers = config.n_layers
     hidden_dim = config.hidden_dim
     lr = config.lr
     n_stories = config.n_stories
@@ -151,6 +153,7 @@ if __name__ == "__main__":
         metrics = "mse"
     model = model_class(
         n_heads=n_heads,
+        n_layers=n_layers,
         hidden_dim=hidden_dim,
         input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type],
         use_kg=use_kg,
