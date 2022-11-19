@@ -7,16 +7,17 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 import knowledge_graph.gnn_data_utils as kgutils
+from time import time
 device = "cuda" if torch.cuda.is_available() else "cpu"
 PR_THRESHOLD = None
 
 
-def test(*, model, test_data, metrics="f1", verbose=True):
+def test(*, model, test_data, metrics="f1", verbosity=10):
     """
     :param model: the model to test
     :param test_data: test dataloader
     :param metrics: one of either "f1" or "mse".
-    :param verbose: whether or not to print extra output
+    :param verbosity: whether or not to print extra output, lower=more verbose
     :returns: nothing. prints metrics
     """
     # collect metrics
@@ -42,31 +43,34 @@ def test(*, model, test_data, metrics="f1", verbose=True):
         results = mean_squared_error(y_true, y_preds)
     else:
         print(f"{metrics} metric not implemented. please choose one of [f1, mse].")
-    print(f"{metrics} score: {results}")
+    if verbosity > 0:
+        print(f"{metrics} score: {results}")
+    return results
 
 
-def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f1", verbose=True):
+def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f1", verbosity=5):
     """
     :param model: the model to test
     :param train_data: train dataloader
     :param test_data: test dataloader
-    :param verbose: whether or not to print extra output
+    :param verbosity: whether or not to print extra output, lower=more verbose
     :returns: nothing. trains given model using train_data and tests it every epoch with test_data
     """
     for epoch in range(epochs):
-        if verbose:
-            print(f"starting epoch {epoch}")
+        start_time = time()
+        tot_loss = 0
         for i, (X, y, kgs) in enumerate(train_data):
             X, y = X.to(device), y.to(device)
             for kg in kgs:
                 for k in kg: kg[k] = kg[k].to(device)
             y_hat = model(X, kgs)
             loss = criterion(y_hat, y)
+            tot_loss += loss.item()
             loss.backward()
             opt.step()
-            if verbose and i%1==0:
-                print(f"batch {i} loss: {loss.item()}")
-        test(model=model, test_data=test_data, metrics=metrics, verbose=verbose)
+        results = test(model=model, test_data=test_data, metrics=metrics, verbosity=verbosity)
+        if verbosity > 0:
+            print(f"epoch {epoch} time: {time()-start_time:0.3}s, loss: {tot_loss:0.4}, {metrics}: {results:0.5}")
 
 
 def parse_args():
@@ -75,10 +79,10 @@ def parse_args():
     parser.add_argument("--n_synth", default=10, type=int, help="number of synthetic datapoints to use per story")
     #parser.add_argument("--train_ratio", default=0.8, type=float, help="train ratio")
     parser.add_argument("--batch_size", default=64, type=int)
-    parser.add_argument("--n_heads", default=2, type=int)
+    parser.add_argument("--n_heads", default=8, type=int)
     parser.add_argument("--n_epochs", default=10, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
-    parser.add_argument("--pr_threshold", default=0.5, type=float)
+    parser.add_argument("--pr_threshold", default=0.02, type=float)
     parser.add_argument("--encoder_type", default="all-MiniLM-L6-v2", type=str,
         choices=["all-MiniLM-L6-v2", "paraphrase-albert-small-v2"])
     parser.add_argument("--model_type", default="continuity_bert", type=str,

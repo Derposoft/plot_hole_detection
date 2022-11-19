@@ -13,16 +13,19 @@ class ContinuityBERT(nn.Module):
     baseline model which finds Continuity Errors in plots --
     i.e., which sentences are plot holes and which ones are not.
     """
-    def __init__(self, n_heads=16, input_dim=384, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
+    def __init__(self, n_heads=16, input_dim=384, hidden_dim=20, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
         nn.Module.__init__(self)
+        # embed into hidden dim
+        full_hidden_dim = hidden_dim*n_heads
+        self.embedder = nn.Linear(input_dim, full_hidden_dim)
         # decider decides which sentences are continuity errors
-        self.decider = nn.Transformer(nhead=n_heads, d_model=input_dim, batch_first=True)
+        self.decider = nn.Transformer(nhead=n_heads, d_model=full_hidden_dim, batch_first=True)
         # GAT which will use KG
         self.use_kg = use_kg
         self.gat = GATv2Conv(in_channels=kg_node_dim, out_channels=kg_node_dim, edge_dim=kg_edge_dim)
         self.aggregator = aggr.MeanAggregation()
         # project feature space to single probability
-        self.proj = nn.Linear(input_dim if not self.use_kg else input_dim+kg_node_dim, 1)
+        self.proj = nn.Linear(full_hidden_dim if not self.use_kg else full_hidden_dim+kg_node_dim, 1)
         # softmax normalizes all proj outputs to find sentence
         self.softmax = nn.Softmax(dim=-1)
 
@@ -38,6 +41,9 @@ class ContinuityBERT(nn.Module):
         :returns: sequence of logits for each sentence
         """
         batch_size, seq_len = x.shape[0], x.shape[1]
+
+        # embed input
+        x = self.embedder(x)
 
         # obtain decider output
         x = self.decider(x, torch.zeros(x.shape).to(device))
@@ -70,16 +76,19 @@ class UnresolvedBERT(nn.Module):
     i.e., whether or not the story was cut short before the storyline 
     was resolved.
     """
-    def __init__(self, n_heads=16, input_dim=384, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
+    def __init__(self, n_heads=16, input_dim=384, hidden_dim=20, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
         nn.Module.__init__(self)
+        # embed into hidden dim
+        full_hidden_dim = hidden_dim*n_heads
+        self.embedder = nn.Linear(input_dim, full_hidden_dim)
         # decider decides which sentences are most important in deciding how "incomplete" story is
-        self.decider = nn.Transformer(nhead=n_heads, d_model=input_dim, batch_first=True)
+        self.decider = nn.Transformer(nhead=n_heads, d_model=full_hidden_dim, batch_first=True)
         # GAT which will use KG
         self.use_kg = use_kg
         self.gat = GATv2Conv(in_channels=kg_node_dim, out_channels=kg_node_dim, edge_dim=kg_edge_dim)
         self.aggregator = aggr.MeanAggregation()
         # project feature space to single probability
-        self.proj = nn.Linear(input_dim if not self.use_kg else input_dim+kg_node_dim, 1)
+        self.proj = nn.Linear(full_hidden_dim if not self.use_kg else full_hidden_dim+kg_node_dim, 1)
         # sigmoid function to determine percentage of story cut off
         self.sigmoid = nn.Sigmoid()
         
@@ -96,6 +105,9 @@ class UnresolvedBERT(nn.Module):
         """
         batch_size = x.shape[0]
 
+        # embed input
+        x = self.embedder(x)
+        
         # obtain decider output
         x = self.decider(x, torch.zeros([x.shape[0], 1, x.shape[-1]]).to(device))
 
