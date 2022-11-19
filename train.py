@@ -23,10 +23,9 @@ def test(*, model, test_data, metrics="f1", verbose=True):
     y_preds = []
     y_true = []
     for _, (X, y, kgs) in enumerate(test_data):
-        X.to(device)
-        y.to(device)
+        X, y = X.to(device), y.to(device)
         for kg in kgs:
-            for k in kg: kg[k].to(device)
+            for k in kg: kg[k] = kg[k].to(device)
         with torch.no_grad():
             y_preds.append(model(X, kgs))
         y_true.append(y)
@@ -58,10 +57,9 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
         if verbose:
             print(f"starting epoch {epoch}")
         for i, (X, y, kgs) in enumerate(train_data):
-            X.to(device)
-            y.to(device)
+            X, y = X.to(device), y.to(device)
             for kg in kgs:
-                for k in kg: kg[k].to(device)
+                for k in kg: kg[k] = kg[k].to(device)
             y_hat = model(X, kgs)
             loss = criterion(y_hat, y)
             loss.backward()
@@ -148,8 +146,8 @@ if __name__ == "__main__":
         kg_node_dim=kg_node_dim,
         kg_edge_dim=kg_edge_dim,
     )
+    model = model.to(device)
     opt = Adam(model.parameters(), lr=lr)
-    model.to(device)
     print("done.")
 
     # train model

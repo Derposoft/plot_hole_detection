@@ -1,5 +1,11 @@
 import data.utils as utils
+import sys
 
+# ensure data deletion should happen
+ans = input("are you sure you want to delete all data?")
+if "n" in ans.lower(): sys.exit()
+
+# delete data
 kg_path = "./knowledge_graph"
 synth_data_folders = [
     "data/synthetic/test",

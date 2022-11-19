@@ -5,6 +5,7 @@ that to find each of the 2 kinds of plot holes.
 import torch
 import torch.nn as nn
 from torch_geometric.nn import GATv2Conv, aggr
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class ContinuityBERT(nn.Module):
@@ -39,7 +40,7 @@ class ContinuityBERT(nn.Module):
         batch_size, seq_len = x.shape[0], x.shape[1]
 
         # obtain decider output
-        x = self.decider(x, torch.zeros(x.shape))
+        x = self.decider(x, torch.zeros(x.shape).to(device))
 
         # if using kg, concatenate kg output to decider output
         if self.use_kg:
@@ -96,7 +97,7 @@ class UnresolvedBERT(nn.Module):
         batch_size = x.shape[0]
 
         # obtain decider output
-        x = self.decider(x, torch.zeros([x.shape[0], 1, x.shape[-1]]))
+        x = self.decider(x, torch.zeros([x.shape[0], 1, x.shape[-1]]).to(device))
 
         # if using kg, concatenate kg output to decider output
         if self.use_kg:
