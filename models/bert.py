@@ -28,12 +28,14 @@ class ContinuityBERT(nn.Module):
         )
         # GAT which will use KG
         self.use_kg = use_kg
-        self.gat = GATv2Conv(in_channels=kg_node_dim, out_channels=kg_node_dim, edge_dim=kg_edge_dim)
+        self.gat = None
+        if use_kg: self.gat = GATv2Conv(in_channels=kg_node_dim, out_channels=kg_node_dim, edge_dim=kg_edge_dim)
         self.aggregator = aggr.MeanAggregation()
         # project feature space to single probability
         self.proj = nn.Linear(full_hidden_dim if not self.use_kg else full_hidden_dim+kg_node_dim, 1)
         # softmax normalizes all proj outputs to find sentence
         self.softmax = nn.Softmax(dim=-1)
+        print(f"initialized continuityBERT with {get_model_size(self)} parameters.")
 
     def forward(self, x, kgs=None):
         """
@@ -97,12 +99,14 @@ class UnresolvedBERT(nn.Module):
         )
         # GAT which will use KG
         self.use_kg = use_kg
-        self.gat = GATv2Conv(in_channels=kg_node_dim, out_channels=kg_node_dim, edge_dim=kg_edge_dim)
+        self.gat = None
+        if use_kg: self.gat = GATv2Conv(in_channels=kg_node_dim, out_channels=kg_node_dim, edge_dim=kg_edge_dim)
         self.aggregator = aggr.MeanAggregation()
         # project feature space to single probability
         self.proj = nn.Linear(full_hidden_dim if not self.use_kg else full_hidden_dim+kg_node_dim, 1)
         # sigmoid function to determine percentage of story cut off
         self.sigmoid = nn.Sigmoid()
+        print(f"initialized unresolvedBERT with {get_model_size(self)} parameters.")
         
     def forward(self, x, kgs=None):
         """
@@ -138,6 +142,10 @@ class UnresolvedBERT(nn.Module):
         x = self.proj(x)
         x = x.reshape([x.shape[0]])
         return self.sigmoid(x)
+
+
+def get_model_size(model: nn.Module):
+    return sum([x.numel() for x in model.parameters()])
 
 
 if __name__ == "__main__":
