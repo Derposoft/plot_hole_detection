@@ -80,10 +80,13 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
             loss.backward()
             opt.step()
         tot_loss /= len(train_data)
-        results = test(model=model, test_data=test_data, metrics=metrics, verbosity=0)
+        results = None
+        if (epoch+1) % verbosity == 0:
+            results = test(model=model, test_data=test_data, metrics=metrics, verbosity=0)
         if verbosity > 0:
+            results_str = f", test {metrics}: {results:0.5}" if results else ""
             print(
-                f"epoch {epoch} time: {time()-start_time:0.3}s, train loss: {tot_loss:0.4}, test {metrics}: {results:0.5}"
+                f"epoch {epoch+1} time: {time()-start_time:0.3}s, train loss: {tot_loss:0.4}{results_str}"
             )
 
 
@@ -91,7 +94,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_stories", default=100, type=int, help="number of stories to use (for both test and train)")
     parser.add_argument("--n_synth", default=10, type=int, help="number of synthetic datapoints to use per story")
-    #parser.add_argument("--train_ratio", default=0.8, type=float, help="train ratio")
+    parser.add_argument("--train_ratio", default=0.5, type=float, help="train ratio")
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--n_heads", default=8, type=int)
     parser.add_argument("--n_layers", default=6, type=int)
@@ -104,6 +107,7 @@ def parse_args():
     parser.add_argument("--model_type", default="continuity_bert", type=str,
         choices=["continuity_bert", "unresolved_bert", "continuity_bert_kg", "unresolved_bert_kg"])
     parser.add_argument("--seed", default=0, type=int)
+    parser.add_argument("--verbosity", default=5, type=int, help="verbosity of output if != 0; lower is more verbose.")
     config = parser.parse_args()
     return config
 
@@ -126,8 +130,9 @@ if __name__ == "__main__":
     n_stories = config.n_stories
     n_synth = config.n_synth
     n_epochs = config.n_epochs
-    train_ratio = 0.5#config.train_ratio
+    train_ratio = config.train_ratio
     PR_THRESHOLD = config.pr_threshold
+    verbosity = config.verbosity
     kg_node_dim = kgutils.KG_NODE_DIM
     kg_edge_dim = kgutils.KG_EDGE_DIM
 
@@ -186,5 +191,6 @@ if __name__ == "__main__":
         criterion=criterion,
         epochs=n_epochs,
         metrics=metrics,
+        verbosity=verbosity,
     )
     print("done")
