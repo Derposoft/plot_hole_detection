@@ -67,6 +67,7 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
     :param verbosity: whether or not to print extra output, lower=more verbose
     :returns: nothing. trains given model using train_data and tests it every epoch with test_data
     """
+    best_metric = 0 if metrics == "f1" else float("inf")
     for epoch in range(epochs):
         start_time = time()
         tot_loss = 0
@@ -83,11 +84,14 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
         results = None
         if (epoch+1) % verbosity == 0:
             results = test(model=model, test_data=test_data, metrics=metrics, verbosity=0)
+            if metrics == "f1": best_metric = max(best_metric, results)
+            else: best_metric = min(best_metric, results)
         if verbosity > 0:
-            results_str = f", test {metrics}: {results:0.5}" if results else ""
+            results_str = f", test {metrics}: {results:0.5}" if results != None else ""
             print(
                 f"epoch {epoch+1} time: {time()-start_time:0.3}s, train loss: {tot_loss:0.4}{results_str}"
             )
+    print(f"post-training summary -- best {metrics}: {best_metric}")
 
 
 def parse_args():
