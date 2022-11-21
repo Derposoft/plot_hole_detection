@@ -19,13 +19,6 @@ class ContinuityBERT(nn.Module):
         full_hidden_dim = hidden_dim*n_heads
         self.embedder = nn.Linear(input_dim, full_hidden_dim)
         # decider decides which sentences are continuity errors
-        """self.decider = nn.Transformer(
-            nhead=n_heads,
-            d_model=full_hidden_dim,
-            batch_first=True,
-            num_encoder_layers=n_layers,
-            num_decoder_layers=n_layers,
-        )"""
         self.decider = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(full_hidden_dim, n_heads, dim_feedforward=full_hidden_dim, batch_first=True),
             n_layers,
@@ -38,7 +31,7 @@ class ContinuityBERT(nn.Module):
         # project feature space to single probability
         self.proj = nn.Linear(full_hidden_dim if not self.use_kg else full_hidden_dim+kg_node_dim, 1)
         # softmax normalizes all proj outputs to find sentence
-        self.softmax = nn.Softmax(dim=-1)
+        self.sigmoid = nn.Sigmoid()
         print(f"initialized continuityBERT with {get_model_size(self)} parameters.")
 
     def forward(self, x, kgs=None):
@@ -58,7 +51,7 @@ class ContinuityBERT(nn.Module):
         x = self.embedder(x)
 
         # obtain decider output
-        x = self.decider(x)#, torch.zeros(x.shape).to(device))
+        x = self.decider(x)
 
         # if using kg, concatenate kg output to decider output
         if self.use_kg:
@@ -79,7 +72,7 @@ class ContinuityBERT(nn.Module):
         # pass all output into projection layer
         x = self.proj(x)
         x = x.reshape([x.shape[0], -1])
-        return self.softmax(x)
+        return self.sigmoid(x)
 
 
 class UnresolvedBERT(nn.Module):

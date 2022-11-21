@@ -105,7 +105,7 @@ def parse_args():
     parser.add_argument("--hidden_dim", default=20, type=int)
     parser.add_argument("--n_epochs", default=10, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
-    parser.add_argument("--pr_threshold", default=0.02, type=float)
+    parser.add_argument("--pr_threshold", default=0.2, type=float)
     parser.add_argument("--encoder_type", default="all-MiniLM-L6-v2", type=str,
         choices=["all-MiniLM-L6-v2", "paraphrase-albert-small-v2"])
     parser.add_argument("--model_type", default="continuity_bert", type=str,
