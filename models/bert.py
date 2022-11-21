@@ -5,7 +5,7 @@ that to find each of the 2 kinds of plot holes.
 import torch
 import torch.nn as nn
 from torch_geometric.nn import GATv2Conv, aggr
-import models.utils as utils
+import models.model_utils as utils
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 

@@ -1,5 +1,6 @@
 import argparse
 from data import utils
+from models import model_utils
 from models import bert
 import numpy as np
 import random
@@ -86,7 +87,7 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
             results = test(model=model, test_data=test_data, metrics=metrics, verbosity=0)
             if metrics == "f1": best_metric = max(best_metric, results)
             else: best_metric = min(best_metric, results)
-        if verbosity > 0:
+        if verbosity <= 0 or (epoch+1) % verbosity == 0:
             results_str = f", test {metrics}: {results:0.5}" if results != None else ""
             print(
                 f"epoch {epoch+1} time: {time()-start_time:0.3}s, train loss: {tot_loss:0.4}{results_str}"
@@ -96,16 +97,16 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_stories", default=100, type=int, help="number of stories to use (for both test and train)")
-    parser.add_argument("--n_synth", default=10, type=int, help="number of synthetic datapoints to use per story")
+    parser.add_argument("--n_stories", default=1000, type=int, help="number of stories to use (for both test and train)")
+    parser.add_argument("--n_synth", default=1, type=int, help="number of synthetic datapoints to use per story")
     parser.add_argument("--train_ratio", default=0.5, type=float, help="train ratio")
-    parser.add_argument("--batch_size", default=64, type=int)
+    parser.add_argument("--batch_size", default=256, type=int)
     parser.add_argument("--n_heads", default=8, type=int)
-    parser.add_argument("--n_layers", default=6, type=int)
+    parser.add_argument("--n_layers", default=3, type=int)
     parser.add_argument("--n_gnn_layers", default=2, type=int)
     parser.add_argument("--hidden_dim", default=20, type=int)
-    parser.add_argument("--n_epochs", default=10, type=int)
-    parser.add_argument("--lr", default=1e-5, type=float)
+    parser.add_argument("--n_epochs", default=300, type=int)
+    parser.add_argument("--lr", default=1.5e-5, type=float) # 1e-5
     parser.add_argument("--pr_threshold", default=0.2, type=float)
     parser.add_argument("--encoder_type", default="all-MiniLM-L6-v2", type=str,
         choices=["all-MiniLM-L6-v2", "paraphrase-albert-small-v2"])
