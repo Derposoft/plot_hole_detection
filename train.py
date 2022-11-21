@@ -122,7 +122,7 @@ def parse_args():
     settings_json = config.get("settings_json", "")
     if settings_json != "":
         with open(settings_json, "r") as f:
-            user_provided_settings = json.load(f)[config["model_type"]]
+            user_provided_settings = json.load(f).get(config["model_type"], {})
         config.update(user_provided_settings)
     return config
 
