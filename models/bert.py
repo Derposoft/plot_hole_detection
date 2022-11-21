@@ -19,12 +19,16 @@ class ContinuityBERT(nn.Module):
         full_hidden_dim = hidden_dim*n_heads
         self.embedder = nn.Linear(input_dim, full_hidden_dim)
         # decider decides which sentences are continuity errors
-        self.decider = nn.Transformer(
+        """self.decider = nn.Transformer(
             nhead=n_heads,
             d_model=full_hidden_dim,
             batch_first=True,
             num_encoder_layers=n_layers,
             num_decoder_layers=n_layers,
+        )"""
+        self.decider = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(full_hidden_dim, n_heads, dim_feedforward=full_hidden_dim, batch_first=True),
+            n_layers,
         )
         # GAT which will use KG
         self.use_kg = use_kg
@@ -54,7 +58,7 @@ class ContinuityBERT(nn.Module):
         x = self.embedder(x)
 
         # obtain decider output
-        x = self.decider(x, torch.zeros(x.shape).to(device))
+        x = self.decider(x)#, torch.zeros(x.shape).to(device))
 
         # if using kg, concatenate kg output to decider output
         if self.use_kg:
