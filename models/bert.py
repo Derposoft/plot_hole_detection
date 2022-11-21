@@ -14,14 +14,31 @@ class ContinuityBERT(nn.Module):
     baseline model which finds Continuity Errors in plots --
     i.e., which sentences are plot holes and which ones are not.
     """
-    def __init__(self, n_heads=16, n_layers=6, n_gnn_layers=2, input_dim=384, hidden_dim=20, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
+    def __init__(
+        self,
+        n_heads=16,
+        n_layers=6,
+        n_gnn_layers=2,
+        input_dim=384,
+        hidden_dim=20,
+        use_kg=False,
+        kg_node_dim=100,
+        kg_edge_dim=100,
+        dropout=0.1,
+    ):
         nn.Module.__init__(self)
         # embed into hidden dim
         full_hidden_dim = hidden_dim*n_heads
         self.embedder = nn.Linear(input_dim, full_hidden_dim)
         # decider decides which sentences are continuity errors
         self.decider = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(full_hidden_dim, n_heads, dim_feedforward=full_hidden_dim, batch_first=True),
+            nn.TransformerEncoderLayer(
+                full_hidden_dim,
+                n_heads,
+                dim_feedforward=full_hidden_dim,
+                batch_first=True,
+                dropout=dropout,
+            ),
             n_layers,
         )
         # GAT which will use KG
@@ -32,7 +49,7 @@ class ContinuityBERT(nn.Module):
         # project feature space to single probability
         self.proj = nn.Linear(full_hidden_dim if not self.use_kg else full_hidden_dim+kg_node_dim, 1)
         # softmax normalizes all proj outputs to find sentence
-        self.sigmoid = nn.Sigmoid()
+        self.softmax = nn.Softmax(dim=-1)
         print(f"initialized continuityBERT with {utils.get_model_size(self)} parameters.")
 
     def forward(self, x, kgs=None):
@@ -75,7 +92,7 @@ class ContinuityBERT(nn.Module):
         # pass all output into projection layer
         x = self.proj(x)
         x = x.reshape([x.shape[0], -1])
-        return self.sigmoid(x)
+        return self.softmax(x)
 
 
 class UnresolvedBERT(nn.Module):
@@ -84,7 +101,18 @@ class UnresolvedBERT(nn.Module):
     i.e., whether or not the story was cut short before the storyline 
     was resolved.
     """
-    def __init__(self, n_heads=16, n_layers=6, n_gnn_layers=2, input_dim=384, hidden_dim=20, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
+    def __init__(
+        self,
+        n_heads=16,
+        n_layers=6,
+        n_gnn_layers=2,
+        input_dim=384,
+        hidden_dim=20,
+        use_kg=False,
+        kg_node_dim=100,
+        kg_edge_dim=100,
+        dropout=0.1,
+    ):
         nn.Module.__init__(self)
         # embed into hidden dim
         full_hidden_dim = hidden_dim*n_heads
@@ -96,6 +124,7 @@ class UnresolvedBERT(nn.Module):
             batch_first=True,
             num_encoder_layers=n_layers,
             num_decoder_layers=n_layers,
+            dropout=dropout,
         )
         # GAT which will use KG
         self.use_kg = use_kg

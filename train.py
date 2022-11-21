@@ -1,5 +1,6 @@
 import argparse
 from data import utils
+import json
 from models import model_utils
 from models import bert
 import numpy as np
@@ -100,21 +101,29 @@ def parse_args():
     parser.add_argument("--n_stories", default=1000, type=int, help="number of stories to use (for both test and train)")
     parser.add_argument("--n_synth", default=1, type=int, help="number of synthetic datapoints to use per story")
     parser.add_argument("--train_ratio", default=0.5, type=float, help="train ratio")
-    parser.add_argument("--batch_size", default=256, type=int)
+    parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--n_heads", default=8, type=int)
     parser.add_argument("--n_layers", default=3, type=int)
     parser.add_argument("--n_gnn_layers", default=2, type=int)
     parser.add_argument("--hidden_dim", default=20, type=int)
-    parser.add_argument("--n_epochs", default=300, type=int)
-    parser.add_argument("--lr", default=1.5e-5, type=float) # 1e-5
-    parser.add_argument("--pr_threshold", default=0.2, type=float)
+    parser.add_argument("--dropout", default=0.2, type=float)
+    parser.add_argument("--n_epochs", default=100, type=int)
+    parser.add_argument("--lr", default=1e-5, type=float)
+    parser.add_argument("--pr_threshold", default=0.3, type=float)
     parser.add_argument("--encoder_type", default="all-MiniLM-L6-v2", type=str,
         choices=["all-MiniLM-L6-v2", "paraphrase-albert-small-v2"])
     parser.add_argument("--model_type", default="continuity_bert", type=str,
         choices=["continuity_bert", "unresolved_bert", "continuity_bert_kg", "unresolved_bert_kg"])
     parser.add_argument("--seed", default=0, type=int)
-    parser.add_argument("--verbosity", default=5, type=int, help="verbosity of output if != 0; lower is more verbose.")
+    parser.add_argument("--verbosity", default=1, type=int, help="verbosity of output if != 0; lower is more verbose")
+    parser.add_argument("--settings_json", default="", type=str, help="JSON with optimal settings for the given model")
     config = parser.parse_args()
+    config = vars(config)
+    settings_json = config.get("settings_json", "")
+    if settings_json != "":
+        with open(settings_json, "r") as f:
+            user_provided_settings = json.load(f)[config["model_type"]]
+        config.update(user_provided_settings)
     return config
 
 
@@ -124,26 +133,17 @@ if __name__ == "__main__":
     """
     ### hyperparameters ###
     config = parse_args()
-    set_seed(config.seed)
-    encoder_type = config.encoder_type
-    model_type = config.model_type
-    use_kg = "kg" in model_type
-    batch_size = config.batch_size
-    n_heads = config.n_heads
-    n_layers = config.n_layers
-    n_gnn_layers = config.n_gnn_layers
-    hidden_dim = config.hidden_dim
-    lr = config.lr
-    n_stories = config.n_stories
-    n_synth = config.n_synth
-    n_epochs = config.n_epochs
-    train_ratio = config.train_ratio
-    PR_THRESHOLD = config.pr_threshold
-    verbosity = config.verbosity
-    kg_node_dim = kgutils.KG_NODE_DIM
-    kg_edge_dim = kgutils.KG_EDGE_DIM
+    set_seed(config["seed"])
+    model_type = config["model_type"]
+    train_ratio = config["train_ratio"]
+    PR_THRESHOLD = config["pr_threshold"]
 
     # read data
+    batch_size = config["batch_size"]
+    n_stories = config["n_stories"]
+    n_synth = config["n_synth"]
+    use_kg = "kg" in model_type
+    encoder_type = config["encoder_type"]
     print("reading data...")
     continuity_train, unresolved_train = utils.read_data(
         batch_size=batch_size,
@@ -152,6 +152,7 @@ if __name__ == "__main__":
         data_path="data/synthetic/train",
         cache_path="data/encoded/train",
         get_kgs=use_kg,
+        encoder=encoder_type,
     )
     continuity_test, unresolved_test = utils.read_data(
         batch_size=batch_size,
@@ -160,6 +161,7 @@ if __name__ == "__main__":
         data_path="data/synthetic/test",
         cache_path="data/encoded/test",
         get_kgs=use_kg,
+        encoder=encoder_type,
     )
     print("done.")
 
@@ -176,17 +178,18 @@ if __name__ == "__main__":
         criterion = nn.MSELoss()
         metrics = "mse"
     model = model_class(
-        n_heads=n_heads,
-        n_layers=n_layers,
-        n_gnn_layers=n_gnn_layers,
-        hidden_dim=hidden_dim,
+        n_heads=config["n_heads"],
+        n_layers=config["n_layers"],
+        n_gnn_layers=config["n_gnn_layers"],
+        hidden_dim=config["hidden_dim"],
         input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type],
         use_kg=use_kg,
-        kg_node_dim=kg_node_dim,
-        kg_edge_dim=kg_edge_dim,
+        kg_node_dim=kgutils.KG_NODE_DIM,
+        kg_edge_dim=kgutils.KG_EDGE_DIM,
+        dropout=config["dropout"],
     )
     model = model.to(device)
-    opt = Adam(model.parameters(), lr=lr)
+    opt = Adam(model.parameters(), lr=config["lr"])
     print("done.")
 
     # train model
@@ -197,8 +200,8 @@ if __name__ == "__main__":
         test_data=test_data,
         opt=opt,
         criterion=criterion,
-        epochs=n_epochs,
+        epochs=config["n_epochs"],
         metrics=metrics,
-        verbosity=verbosity,
+        verbosity=config["verbosity"],
     )
     print("done")
