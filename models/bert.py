@@ -5,6 +5,7 @@ that to find each of the 2 kinds of plot holes.
 import torch
 import torch.nn as nn
 from torch_geometric.nn import GATv2Conv, aggr
+import models.utils as utils
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -13,7 +14,7 @@ class ContinuityBERT(nn.Module):
     baseline model which finds Continuity Errors in plots --
     i.e., which sentences are plot holes and which ones are not.
     """
-    def __init__(self, n_heads=16, n_layers=6, input_dim=384, hidden_dim=20, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
+    def __init__(self, n_heads=16, n_layers=6, n_gnn_layers=2, input_dim=384, hidden_dim=20, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
         nn.Module.__init__(self)
         # embed into hidden dim
         full_hidden_dim = hidden_dim*n_heads
@@ -25,14 +26,14 @@ class ContinuityBERT(nn.Module):
         )
         # GAT which will use KG
         self.use_kg = use_kg
-        self.gat = None
-        if use_kg: self.gat = GATv2Conv(in_channels=kg_node_dim, out_channels=kg_node_dim, edge_dim=kg_edge_dim)
+        self.gats = None
+        if use_kg: self.gats = utils.initialize_gnn(kg_node_dim, kg_edge_dim, n_gnn_layers)
         self.aggregator = aggr.MeanAggregation()
         # project feature space to single probability
         self.proj = nn.Linear(full_hidden_dim if not self.use_kg else full_hidden_dim+kg_node_dim, 1)
         # softmax normalizes all proj outputs to find sentence
         self.sigmoid = nn.Sigmoid()
-        print(f"initialized continuityBERT with {get_model_size(self)} parameters.")
+        print(f"initialized continuityBERT with {utils.get_model_size(self)} parameters.")
 
     def forward(self, x, kgs=None):
         """
@@ -57,7 +58,9 @@ class ContinuityBERT(nn.Module):
         if self.use_kg:
             x_kgs = []
             for i in range(batch_size):
-                x_kg = self.gat(kgs[i]["node_feats"], kgs[i]["edge_indices"], kgs[i]["edge_feats"])
+                x_kg = kgs[i]["node_feats"]
+                for conv in self.gats:
+                    x_kg = conv(x_kg, kgs[i]["edge_indices"], kgs[i]["edge_feats"])
                 x_kg = self.aggregator(x_kg)
                 x_kgs.append(x_kg)
             x_kgs = torch.stack(x_kgs, dim=0).reshape([batch_size, -1])
@@ -81,7 +84,7 @@ class UnresolvedBERT(nn.Module):
     i.e., whether or not the story was cut short before the storyline 
     was resolved.
     """
-    def __init__(self, n_heads=16, n_layers=6, input_dim=384, hidden_dim=20, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
+    def __init__(self, n_heads=16, n_layers=6, n_gnn_layers=2, input_dim=384, hidden_dim=20, use_kg=False, kg_node_dim=100, kg_edge_dim=100):
         nn.Module.__init__(self)
         # embed into hidden dim
         full_hidden_dim = hidden_dim*n_heads
@@ -96,14 +99,14 @@ class UnresolvedBERT(nn.Module):
         )
         # GAT which will use KG
         self.use_kg = use_kg
-        self.gat = None
-        if use_kg: self.gat = GATv2Conv(in_channels=kg_node_dim, out_channels=kg_node_dim, edge_dim=kg_edge_dim)
+        self.gats = None
+        if use_kg: self.gats = utils.initialize_gnn(kg_node_dim, kg_edge_dim, n_gnn_layers)
         self.aggregator = aggr.MeanAggregation()
         # project feature space to single probability
         self.proj = nn.Linear(full_hidden_dim if not self.use_kg else full_hidden_dim+kg_node_dim, 1)
         # sigmoid function to determine percentage of story cut off
         self.sigmoid = nn.Sigmoid()
-        print(f"initialized unresolvedBERT with {get_model_size(self)} parameters.")
+        print(f"initialized unresolvedBERT with {utils.get_model_size(self)} parameters.")
         
     def forward(self, x, kgs=None):
         """
@@ -129,7 +132,9 @@ class UnresolvedBERT(nn.Module):
             # generate gnn output for each kg
             x_kgs = []
             for i in range(batch_size):
-                x_kg = self.gat(kgs[i]["node_feats"], kgs[i]["edge_indices"], kgs[i]["edge_feats"])
+                x_kg = kgs[i]["node_feats"]
+                for conv in self.gats:
+                    x_kg = conv(x_kg, kgs[i]["edge_indices"], kgs[i]["edge_feats"])
                 x_kg = self.aggregator(x_kg)
                 x_kgs.append(x_kg)
             x_kgs = torch.stack(x_kgs, dim=0)
@@ -139,10 +144,6 @@ class UnresolvedBERT(nn.Module):
         x = self.proj(x)
         x = x.reshape([x.shape[0]])
         return self.sigmoid(x)
-
-
-def get_model_size(model: nn.Module):
-    return sum([x.numel() for x in model.parameters()])
 
 
 if __name__ == "__main__":

@@ -102,6 +102,7 @@ def parse_args():
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--n_heads", default=8, type=int)
     parser.add_argument("--n_layers", default=6, type=int)
+    parser.add_argument("--n_gnn_layers", default=2, type=int)
     parser.add_argument("--hidden_dim", default=20, type=int)
     parser.add_argument("--n_epochs", default=10, type=int)
     parser.add_argument("--lr", default=1e-3, type=float)
@@ -129,6 +130,7 @@ if __name__ == "__main__":
     batch_size = config.batch_size
     n_heads = config.n_heads
     n_layers = config.n_layers
+    n_gnn_layers = config.n_gnn_layers
     hidden_dim = config.hidden_dim
     lr = config.lr
     n_stories = config.n_stories
@@ -175,6 +177,7 @@ if __name__ == "__main__":
     model = model_class(
         n_heads=n_heads,
         n_layers=n_layers,
+        n_gnn_layers=n_gnn_layers,
         hidden_dim=hidden_dim,
         input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type],
         use_kg=use_kg,
