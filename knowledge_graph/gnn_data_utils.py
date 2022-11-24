@@ -12,31 +12,11 @@ KG_NODE_DIM = 100
 KG_EDGE_DIM = utils.SENTENCE_ENCODER_DIM[SENTENCE_TRANFORMER_MODEL]
 
 
-def get_node_features(adj_dict, all_spacy_entities, spacy_entities_to_index_map):
+def get_node_features(entity_index_map):#all_entities, spacy_entities_to_index_map):
     nodes_features = list()
-    visited = set()
-    for entity in adj_dict:
-        if entity in visited:
-            continue
-        else:
-            visited.add(entity)
-
-        per_node_vector = [0]*KG_NODE_DIM#len(all_spacy_entities)
-        per_node_vector[spacy_entities_to_index_map[adj_dict[entity]['Type']]]=1
-        nodes_features.append(per_node_vector)
-
-        for adj_entity_and_type in adj_dict[entity]['Edges']:
-            adj_entity, type_, _ = adj_entity_and_type
-
-            if adj_entity in visited:             
-                continue
-            else:
-                visited.add(adj_entity)
-
-            per_node_vector = [0]*KG_NODE_DIM#len(all_spacy_entities)
-            per_node_vector[spacy_entities_to_index_map[type_]]=1
-            nodes_features.append(per_node_vector)
-    
+    for i, _ in enumerate(entity_index_map):
+        nodes_features.append([0]*KG_NODE_DIM)
+        nodes_features[-1][i % KG_NODE_DIM] = 1
     return nodes_features
 
 
@@ -49,7 +29,7 @@ def get_edge_features(adj_dict, model):
     return edge_features
 
 
-def create_adjacency_dict(kg_post_processed, all_spacy_entities, spacy_entities_to_index_map, model):
+def create_adjacency_dict(kg_post_processed, model):
     adj_dict = defaultdict(dict)
     edges_list = [[],[]]
     entity_index_map = dict()
@@ -67,9 +47,11 @@ def create_adjacency_dict(kg_post_processed, all_spacy_entities, spacy_entities_
         for adj_entity_and_type in adj_dict[entity]['Edges']:
             adj_entity, type_, _ = adj_entity_and_type
             all_entities.extend([adj_entity])
-    for i, entity in enumerate(all_entities):
-        entity_index_map[entity]=i
-    #print(entity_index_map)
+    idx = 0
+    for entity in all_entities:
+        if entity in entity_index_map: continue
+        entity_index_map[entity]=idx
+        idx += 1
 
     # gen edge indices
     for entity in adj_dict:
@@ -79,7 +61,7 @@ def create_adjacency_dict(kg_post_processed, all_spacy_entities, spacy_entities_
             edges_list[1].append(entity_index_map[adj_entity])
 
     # gen node features
-    nodes_features = get_node_features(adj_dict, all_spacy_entities, spacy_entities_to_index_map)
+    nodes_features = get_node_features(entity_index_map)#all_entities, spacy_entities_to_index_map)
 
     # gen edge features
     edge_features = get_edge_features(adj_dict, model)
@@ -88,7 +70,7 @@ def create_adjacency_dict(kg_post_processed, all_spacy_entities, spacy_entities_
 
 def process_csv(csv_file_name, all_spacy_entities, spacy_entities_to_index_map, model):
     kg_post_processed = pd.read_csv(csv_file_name, dtype=str)
-    nodes_features, edges_list, edge_features = create_adjacency_dict(kg_post_processed, all_spacy_entities, spacy_entities_to_index_map, model)
+    nodes_features, edges_list, edge_features = create_adjacency_dict(kg_post_processed, model)
     return nodes_features, edges_list, edge_features
 
 
@@ -103,7 +85,6 @@ def process_extraction_results():
     for path in paths:
         node_features, edges_list, edge_features = process_csv(path, all_spacy_entities, spacy_entities_to_index_map, model)
         kgs[path.split("/")[-1].lstrip("named_entity_").split(".")[0]+".txt"] = {"node_feats": node_features, "edge_indices": edges_list, "edge_feats": edge_features}
-        #print('For path:{} nodes_features:{} edges_list:{} edge_features:{}'.format(path, node_features.size(), edges_list.size(), edge_features.size()))
     return kgs
 
 
