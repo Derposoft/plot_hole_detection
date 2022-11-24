@@ -69,7 +69,7 @@ def create_adjacency_dict(kg_post_processed, all_spacy_entities, spacy_entities_
             all_entities.extend([adj_entity])
     for i, entity in enumerate(all_entities):
         entity_index_map[entity]=i
-    print(entity_index_map)
+    #print(entity_index_map)
 
     # gen edge indices
     for entity in adj_dict:
@@ -87,7 +87,7 @@ def create_adjacency_dict(kg_post_processed, all_spacy_entities, spacy_entities_
     
 
 def process_csv(csv_file_name, all_spacy_entities, spacy_entities_to_index_map, model):
-    kg_post_processed = pd.read_csv(csv_file_name)
+    kg_post_processed = pd.read_csv(csv_file_name, dtype=str)
     nodes_features, edges_list, edge_features = create_adjacency_dict(kg_post_processed, all_spacy_entities, spacy_entities_to_index_map, model)
     return nodes_features, edges_list, edge_features
 
