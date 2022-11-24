@@ -145,6 +145,16 @@ def generate_synthetic_data(n_stories=10, n_synth=1, train_ratio=0.5):
 
 
 def generate_kgs(data_files_path, data_files=None):
+    # 0. ensure knowledge_graph/data folders are clean
+    folders_to_cleanup = [
+        f"{kg_path}/data/input/",
+        f"{kg_path}/data/output/kg/",
+        f"{kg_path}/data/output/ner",
+        f"{kg_path}/data/result/"
+    ]
+    for folder in folders_to_cleanup:
+        utils.clean_dir(folder)
+
     # 1. copy all data_files to knowledge_graph/data/input/
     kg_path = "./knowledge_graph"
     if not data_files:
@@ -166,17 +176,7 @@ def generate_kgs(data_files_path, data_files=None):
     # 3. run knowledge graph tensor generation code
     kgs = process_extraction_results()
 
-    # 4. clean up knowledge_graph/data folders
-    folders_to_cleanup = [
-        f"{kg_path}/data/input/",
-        f"{kg_path}/data/output/kg/",
-        f"{kg_path}/data/output/ner",
-        f"{kg_path}/data/result/"
-    ]
-    for folder in folders_to_cleanup:
-        utils.clean_dir(folder)
-
-    # 5. return generated knowledge graphs
+    # 4. return generated knowledge graphs
     return kgs
 
 
