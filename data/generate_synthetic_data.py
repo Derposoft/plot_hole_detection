@@ -146,6 +146,7 @@ def generate_synthetic_data(n_stories=10, n_synth=1, train_ratio=0.5):
 
 def generate_kgs(data_files_path, data_files=None):
     # 0. ensure knowledge_graph/data folders are clean
+    kg_path = "./knowledge_graph"
     folders_to_cleanup = [
         f"{kg_path}/data/input/",
         f"{kg_path}/data/output/kg/",
@@ -156,7 +157,6 @@ def generate_kgs(data_files_path, data_files=None):
         utils.clean_dir(folder)
 
     # 1. copy all data_files to knowledge_graph/data/input/
-    kg_path = "./knowledge_graph"
     if not data_files:
         for data_file in osl(data_files_path):
             if not data_file.endswith(".txt"): continue
