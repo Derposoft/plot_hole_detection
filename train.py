@@ -167,8 +167,8 @@ if __name__ == "__main__":
     )
     print("done.")
 
-    # create models and training artifacts
-    print("creating models and training artifacts...")
+    # create training artifacts
+    print("creating training artifacts...")
     if "continuity" in model_type:
         model_class = bert.ContinuityBERT
         train_data, test_data = continuity_train, continuity_test
@@ -179,25 +179,28 @@ if __name__ == "__main__":
         train_data, test_data = unresolved_train, unresolved_test
         criterion = nn.MSELoss()
         metrics = "mse"
-    model = model_class(
-        n_heads=config["n_heads"],
-        n_layers=config["n_layers"],
-        n_gnn_layers=config["n_gnn_layers"],
-        hidden_dim=config["hidden_dim"],
-        input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type],
-        use_kg=use_kg,
-        kg_node_dim=kgutils.KG_NODE_DIM,
-        kg_edge_dim=kgutils.KG_EDGE_DIM,
-        dropout=config["dropout"],
-    )
-    model = model.to(device)
-    opt = Adam(model.parameters(), lr=config["lr"])
     print("done.")
-
-    # train model
+    
+    # start runs
     print(f"training {model_type} model...")
     best_test_metrics = []
-    for _ in range(config["n_runs"]):
+    for i in range(config["n_runs"]):
+        print(f"run {i+1} start -- seed={config['seed']}")
+        # create model
+        model = model_class(
+            n_heads=config["n_heads"],
+            n_layers=config["n_layers"],
+            n_gnn_layers=config["n_gnn_layers"],
+            hidden_dim=config["hidden_dim"],
+            input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type],
+            use_kg=use_kg,
+            kg_node_dim=kgutils.KG_NODE_DIM,
+            kg_edge_dim=kgutils.KG_EDGE_DIM,
+            dropout=config["dropout"],
+        )
+        model = model.to(device)
+        opt = Adam(model.parameters(), lr=config["lr"])
+        # train model
         best_test_metric = train(
             model=model,
             train_data=train_data,
@@ -209,9 +212,10 @@ if __name__ == "__main__":
             verbosity=config["verbosity"],
         )
         best_test_metrics.append(best_test_metric)
-    print(f"done.")
+        config["seed"] += 1
     for i in range(len(best_test_metrics)):
         print(f"run {i+1}: {best_test_metrics[i]}")
+    print(f"done.")
 
     # calculate final metrics
     UNRESOLVED_ERROR_HUMAN_BENCHMARK = 2.51e-3
