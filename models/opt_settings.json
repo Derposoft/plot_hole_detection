@@ -11,6 +11,19 @@
         "encoder_type": "all-MiniLM-L6-v2",
         "verbosity": 1
     },
+    "continuity_bert_kg": {
+        "batch_size": 64,
+        "n_heads": 8,
+        "n_layers": 3,
+        "hidden_dim": 20,
+        "n_gnn_layers": 2,
+        "dropout": 0.2,
+        "n_epochs": 100,
+        "lr": 1e-5,
+        "pr_threshold": 0.3,
+        "encoder_type": "all-MiniLM-L6-v2",
+        "verbosity": 1
+    },
     "unresolved_bert": {
         "batch_size": 64,
         "n_heads": 8,
@@ -19,6 +32,18 @@
         "dropout": 0.2,
         "n_epochs": 100,
         "lr": 1e-7,
+        "encoder_type": "all-MiniLM-L6-v2",
+        "verbosity": 1
+    },
+    "unresolved_bert_kg": {
+        "batch_size": 16,
+        "n_heads": 8,
+        "n_layers": 3,
+        "hidden_dim": 20,
+        "n_gnn_layers": 1,
+        "dropout": 0.2,
+        "n_epochs": 100,
+        "lr": 5e-8,
         "encoder_type": "all-MiniLM-L6-v2",
         "verbosity": 1
     }
