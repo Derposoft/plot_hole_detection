@@ -225,17 +225,17 @@ if __name__ == "__main__":
     confidence_interval_95_zval = 1.96
     if "unresolved" in model_type:
         t_human, p_human = ttest_1samp(
-            best_test_metrics, UNRESOLVED_ERROR_HUMAN_BENCHMARK, alternative="greater"
+            best_test_metrics, UNRESOLVED_ERROR_HUMAN_BENCHMARK, alternative="less"
         )
         t_random, p_random = ttest_1samp(
-            best_test_metrics, UNRESOLVED_ERROR_RANDOM_MODEL, alternative="greater"
+            best_test_metrics, UNRESOLVED_ERROR_RANDOM_MODEL, alternative="less"
         )
     else:
         t_human, p_human = ttest_1samp(
-            best_test_metrics, CONTINUITY_ERROR_HUMAN_BENCHMARK, alternative="greater"
+            best_test_metrics, CONTINUITY_ERROR_HUMAN_BENCHMARK, alternative="less"
         )
         t_random, p_random = ttest_1samp(
-            best_test_metrics, CONTINUITY_ERROR_RANDOM_MODEL, alternative="greater"
+            best_test_metrics, CONTINUITY_ERROR_RANDOM_MODEL, alternative="less"
         )
     print(f"t,p-val for human<model: {t_human},{p_human}, significant: {p_human<0.05}")
     print(f"t,p-val for random<model: {t_random},{p_random}, significant: {p_random<0.05}")
