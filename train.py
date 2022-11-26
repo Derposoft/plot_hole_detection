@@ -1,10 +1,10 @@
 import argparse
 from data import utils
 import json
-from models import model_utils
 from models import bert
 import numpy as np
 import random
+from scipy.stats import ttest_1samp
 from sklearn.metrics import f1_score, mean_squared_error
 import torch
 import torch.nn as nn
@@ -94,6 +94,7 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
                 f"epoch {epoch+1} time: {time()-start_time:0.3}s, train loss: {tot_loss:0.4}{results_str}"
             )
     print(f"post-training summary -- best {metrics}: {best_metric}")
+    return best_metric
 
 
 def parse_args():
@@ -108,6 +109,7 @@ def parse_args():
     parser.add_argument("--hidden_dim", default=20, type=int)
     parser.add_argument("--dropout", default=0.2, type=float)
     parser.add_argument("--n_epochs", default=100, type=int)
+    parser.add_argument("--n_runs", default=5, type=int)
     parser.add_argument("--lr", default=1e-5, type=float)
     parser.add_argument("--pr_threshold", default=0.3, type=float)
     parser.add_argument("--encoder_type", default="all-MiniLM-L6-v2", type=str,
@@ -194,14 +196,41 @@ if __name__ == "__main__":
 
     # train model
     print(f"training {model_type} model...")
-    train(
-        model=model,
-        train_data=train_data,
-        test_data=test_data,
-        opt=opt,
-        criterion=criterion,
-        epochs=config["n_epochs"],
-        metrics=metrics,
-        verbosity=config["verbosity"],
-    )
-    print("done")
+    best_test_metrics = []
+    for _ in range(config["n_runs"]):
+        best_test_metric = train(
+            model=model,
+            train_data=train_data,
+            test_data=test_data,
+            opt=opt,
+            criterion=criterion,
+            epochs=config["n_epochs"],
+            metrics=metrics,
+            verbosity=config["verbosity"],
+        )
+        best_test_metrics.append(best_test_metric)
+    print(f"done.")
+    for i in range(len(best_test_metrics)):
+        print(f"run {i+1}: {best_test_metrics[i]}")
+
+    # calculate final metrics
+    UNRESOLVED_ERROR_HUMAN_BENCHMARK = 2.51e-3
+    UNRESOLVED_ERROR_RANDOM_MODEL = 1.37e-2
+    CONTINUITY_ERROR_HUMAN_BENCHMARK = 0.5
+    CONTINUITY_ERROR_RANDOM_MODEL = 0.026
+    if "unresolved" in model_type:
+        t_human, p_human = ttest_1samp(
+            best_test_metrics, UNRESOLVED_ERROR_HUMAN_BENCHMARK, alternative="greater"
+        )
+        t_random, p_random = ttest_1samp(
+            best_test_metrics, UNRESOLVED_ERROR_RANDOM_MODEL, alternative="greater"
+        )
+    else:
+        t_human, p_human = ttest_1samp(
+            best_test_metrics, UNRESOLVED_ERROR_HUMAN_BENCHMARK, alternative="greater"
+        )
+        t_random, p_random = ttest_1samp(
+            best_test_metrics, UNRESOLVED_ERROR_RANDOM_MODEL, alternative="greater"
+        )
+    print(f"t,p-val for human<model: {t_human},{p_human}, significant: {p_human<0.05}")
+    print(f"t,p-val for random<model: {t_random},{p_random}, significant: {p_random<0.05}")
