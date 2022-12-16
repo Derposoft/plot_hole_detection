@@ -106,6 +106,7 @@ def read_data(
     n_stories=5,
     n_synth=1,
     get_kgs=False,
+    optimize_space=False,
 ):
     """
     :param batch_size: batch_size for output dataloaders
@@ -130,7 +131,10 @@ def read_data(
     # check if cached stories exist for this n_stories
     kg_suffix = "_kg" if get_kgs else ""
     cache_file = f"{n_stories}_{n_synth}_stories_encoded{kg_suffix}.pkl"
+    optimized_space_cache_file = f"{n_stories}_{n_synth}_stories_encoded_kg.pkl"
     cache_files = osl(cache_path)
+    if optimize_space and optimized_space_cache_file in cache_files:
+        cache_file = optimized_space_cache_file
     if cache_file in cache_files:
         with open(ospj(cache_path, cache_file), "rb") as f:
             continuity_dataset, unresolved_dataset = pkl.load(f)

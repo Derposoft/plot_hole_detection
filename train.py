@@ -117,6 +117,8 @@ def parse_args():
     parser.add_argument("--model_type", default="continuity_bert", type=str,
         choices=["continuity_bert", "unresolved_bert", "continuity_bert_kg", "unresolved_bert_kg"])
     parser.add_argument("--seed", default=0, type=int)
+    parser.add_argument("--optimize_space", default=False, type=bool,
+        help="if a _kg dataset is already generated, reuse it for non_kg data")
     parser.add_argument("--verbosity", default=1, type=int, help="verbosity of output if != 0; lower is more verbose")
     parser.add_argument("--settings_json", default="", type=str, help="JSON with optimal settings for the given model")
     config = parser.parse_args()
@@ -146,6 +148,7 @@ if __name__ == "__main__":
     n_synth = config["n_synth"]
     use_kg = "kg" in model_type
     encoder_type = config["encoder_type"]
+    optimize_space = config["optimize_space"]
     print("reading data...")
     continuity_train, unresolved_train = utils.read_data(
         batch_size=batch_size,
@@ -155,6 +158,7 @@ if __name__ == "__main__":
         cache_path="data/encoded/train",
         get_kgs=use_kg,
         encoder=encoder_type,
+        optimize_space=optimize_space,
     )
     continuity_test, unresolved_test = utils.read_data(
         batch_size=batch_size,
@@ -164,6 +168,7 @@ if __name__ == "__main__":
         cache_path="data/encoded/test",
         get_kgs=use_kg,
         encoder=encoder_type,
+        optimize_space=optimize_space,
     )
     print("done.")
 
