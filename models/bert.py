@@ -9,7 +9,7 @@ import models.model_utils as utils
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-class ContinuityBERT(nn.Module):
+class ContinuityBERT(nn.Module): #ContinuityTransformer
     """
     baseline model which finds Continuity Errors in plots --
     i.e., which sentences are plot holes and which ones are not.
@@ -95,7 +95,7 @@ class ContinuityBERT(nn.Module):
         return self.softmax(x)
 
 
-class UnresolvedBERT(nn.Module):
+class UnresolvedBERT(nn.Module): #UnresolvedTransformer
     """
     baseline model which finds Unresolved Storyline Errors in plots --
     i.e., whether or not the story was cut short before the storyline 

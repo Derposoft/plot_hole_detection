@@ -56,6 +56,38 @@ def encode_stories(encoder, stories: List[List[str]]):
         output.append(torch.stack([torch.Tensor(encoder.encode(sentence)) for sentence in story]))
     return output
 
+"""
+import gensim
+import gensim.downloader as api
+from gensim.models import Word2Vec
+model = api.load("word2vec-google-news-300")
+
+reviewsVec = [r.split() for r in balance["review_body"].values]
+reviewModel = Word2Vec(reviewsVec, vector_size = 300, window=11, min_count = 10)
+"""
+
+
+class SentenceEncoder():
+    def __init__(self, encoder_name, ):
+        #pass Name of encoder to use in encode function?
+        #W2V = Gensim lib
+        """
+        assert encoder_name in SENTENCE_ENCODER_DIM, f"encoder name must be one of {list(SENTENCE_ENCODER_DIM.keys())}"
+        encoder = SentenceTransformer(f"sentence-transformers/{encoder_name}")
+        encoder.eval().to(device)
+        return encoder
+        """
+        pass
+
+    def encode(self, sentence):
+        #returns JUST ONE encoded sentence
+        """
+        output = []
+        for story in tqdm(stories):
+            output.append(torch.stack([torch.Tensor(encoder.encode(sentence)) for sentence in story]))
+        return output
+        """
+        pass
 
 class StoryDataset(Dataset):
     def __init__(self, X, y, kgs=None):
