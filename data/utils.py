@@ -1,6 +1,11 @@
+
+import gensim
+import gensim.downloader as api
+from gensim.models import Word2Vec
 import os
 import pickle as pkl
 from sentence_transformers import SentenceTransformer
+import sys
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader, default_collate
@@ -13,7 +18,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 SENTENCE_ENCODER_DIM = {
     "all-MiniLM-L6-v2": 384,
-    "paraphrase-albert-small-v2": 768
+    "paraphrase-albert-small-v2": 768,
+    "word2vec": 300,
 }
 
 
@@ -30,19 +36,6 @@ def clean_dir(dir, filetype=""):
             os.remove(ospj(dir, file))
 
 
-def create_sentence_encoder(encoder_name="all-MiniLM-L6-v2"):
-    """
-    :param encoder_name: the name of the pretrained encoder 
-        model to use. currently supported are "all-MiniLM-L6-v2" and 
-        "paraphrase-albert-small-v2".
-    :returns: (encoder_model, encoder_output_dim) tuple.
-    """
-    assert encoder_name in SENTENCE_ENCODER_DIM, f"encoder name must be one of {list(SENTENCE_ENCODER_DIM.keys())}"
-    encoder = SentenceTransformer(f"sentence-transformers/{encoder_name}")
-    encoder.eval().to(device)
-    return encoder
-
-
 def encode_stories(encoder, stories: List[List[str]]):
     """
     :param encoder: SentenceTransformer encoder model to use for encoding stories
@@ -56,38 +49,45 @@ def encode_stories(encoder, stories: List[List[str]]):
         output.append(torch.stack([torch.Tensor(encoder.encode(sentence)) for sentence in story]))
     return output
 
-"""
-import gensim
-import gensim.downloader as api
-from gensim.models import Word2Vec
-model = api.load("word2vec-google-news-300")
-
-reviewsVec = [r.split() for r in balance["review_body"].values]
-reviewModel = Word2Vec(reviewsVec, vector_size = 300, window=11, min_count = 10)
-"""
-
 
 class SentenceEncoder():
-    def __init__(self, encoder_name, ):
-        #pass Name of encoder to use in encode function?
-        #W2V = Gensim lib
+    def __init__(self, encoder_name="all-MiniLM-L6-v2"):
         """
-        assert encoder_name in SENTENCE_ENCODER_DIM, f"encoder name must be one of {list(SENTENCE_ENCODER_DIM.keys())}"
-        encoder = SentenceTransformer(f"sentence-transformers/{encoder_name}")
-        encoder.eval().to(device)
-        return encoder
+        :param encoder_name: the name of the encoder model to use.
+            supported encoders can be found in SENTENCE_ENCODER_DIM
         """
-        pass
+        # ensure that encoder is supported
+        assert encoder_name in SENTENCE_ENCODER_DIM, (
+            f"encoder name must be one of {list(SENTENCE_ENCODER_DIM.keys())}"
+        )
+        self.encoder_name = encoder_name
+        self.encoder_dim = SENTENCE_ENCODER_DIM[self.encoder_name]
 
-    def encode(self, sentence):
-        #returns JUST ONE encoded sentence
+        # create encoder
+        if encoder_name == "word2vec":
+            self.encoder_w2v = api.load("word2vec-google-news-300")
+        elif encoder_name == "tfidf":
+            print("not implemented!")
+            sys.exit()
+        else:
+            self.encoder_sentencetransformer = SentenceTransformer(f"sentence-transformers/{encoder_name}")
+            self.encoder_sentencetransformer.eval().to(device)
+
+    def encode(self, sentence: str):
         """
-        output = []
-        for story in tqdm(stories):
-            output.append(torch.stack([torch.Tensor(encoder.encode(sentence)) for sentence in story]))
-        return output
+        :param sentences: n sentence string(s) to encode
+        :returns: encoded sentence in the form of a 
         """
-        pass
+        if self.encoder_name == "word2vec":
+            words = sentence.split()
+            words_in_w2v_model = [word for word in words if word in self.encoder_w2v]
+            return torch.sum(torch.Tensor([self.encoder_w2v[word] for word in words_in_w2v_model]))
+        elif self.encoder_name == "tfidf":
+            print("not implemented!")
+            sys.exit()
+        else:
+            return self.encoder_sentencetransformer.encode(sentence)
+
 
 class StoryDataset(Dataset):
     def __init__(self, X, y, kgs=None):
@@ -225,7 +225,7 @@ def read_data(
 
     # encode all data file sentences using encoder
     print("encoding stories...")
-    encoder = create_sentence_encoder()
+    encoder = SentenceEncoder()
     continuity_data = encode_stories(encoder, continuity_data)
     unresolved_data = encode_stories(encoder, unresolved_data)
 
