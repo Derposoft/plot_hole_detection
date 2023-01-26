@@ -113,7 +113,7 @@ def parse_args():
     parser.add_argument("--lr", default=1e-5, type=float)
     parser.add_argument("--pr_threshold", default=0.3, type=float)
     parser.add_argument("--encoder_type", default="all-MiniLM-L6-v2", type=str,
-        choices=["all-MiniLM-L6-v2", "paraphrase-albert-small-v2"])
+        choices=list(utils.SENTENCE_ENCODER_DIM.keys()))
     parser.add_argument("--model_type", default="continuity_bert", type=str,
         choices=["continuity_bert", "unresolved_bert", "continuity_bert_kg", "unresolved_bert_kg"])
     parser.add_argument("--seed", default=0, type=int)

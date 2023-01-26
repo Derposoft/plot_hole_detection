@@ -162,7 +162,7 @@ def read_data(
     """
     # check if cached stories exist for this n_stories
     kg_suffix = "_kg" if get_kgs else ""
-    cache_file = f"{n_stories}_{n_synth}_stories_encoded{kg_suffix}.pkl"
+    cache_file = f"{n_stories}_{n_synth}_stories_{encoder}_encoded{kg_suffix}.pkl"
     optimized_space_cache_file = f"{n_stories}_{n_synth}_stories_encoded_kg.pkl"
     cache_files = osl(cache_path)
     if optimize_space and optimized_space_cache_file in cache_files:
