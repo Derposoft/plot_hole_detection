@@ -2,19 +2,21 @@ import os
 import subprocess
 import glob
 import pandas as pd
+from multiprocessing import Pool
+
+
+def process_large_corpus(file):
+    p = subprocess.Popen(["./process_large_corpus.sh", file, file + "-out.csv"], stdout=subprocess.PIPE)
+    output, err = p.communicate()
+    return (output, err)
+
 
 def Stanford_Relation_Extractor():
-    print('<kg> extracting relations')
     files = glob.glob(os.getcwd() + "/data/output/kg/*.txt")
     current_directory = os.getcwd()
-    os.chdir(current_directory + '/stanford-openie')
-
-    for f in files:
-        #print("Extracting relations for " + f.split("/")[-1])
-        #os.chdir('./stanford-openie')
-        #print(os.getcwd())
-        p = subprocess.Popen(['./process_large_corpus.sh',f,f + '-out.csv'], stdout=subprocess.PIPE)
-        output, err = p.communicate()
+    os.chdir(current_directory + "/stanford-openie")
+    pool = Pool(os.cpu_count())
+    outputs_and_errors = pool.map(process_large_corpus, files)
 
 
 if __name__ == '__main__':
