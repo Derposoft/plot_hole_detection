@@ -6,6 +6,7 @@ import numpy as np
 import random
 from scipy.stats import ttest_1samp
 from sklearn.metrics import f1_score, mean_squared_error
+import sys
 import torch
 import torch.nn as nn
 from torch.optim import Adam
@@ -99,6 +100,7 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--gen_data_only", default=False, type=bool, help="only generate data, no training")
     parser.add_argument("--n_stories", default=1000, type=int, help="number of stories to use (for both test and train)")
     parser.add_argument("--n_synth", default=1, type=int, help="number of synthetic datapoints to use per story")
     parser.add_argument("--train_ratio", default=0.5, type=float, help="train ratio")
@@ -149,6 +151,7 @@ if __name__ == "__main__":
     use_kg = "kg" in model_type
     encoder_type = config["encoder_type"]
     optimize_space = config["optimize_space"]
+    gen_data_only = config["gen_data_only"]
     print("reading data...")
     continuity_train, unresolved_train = utils.read_data(
         batch_size=batch_size,
@@ -171,6 +174,9 @@ if __name__ == "__main__":
         optimize_space=optimize_space,
     )
     print("done.")
+    if gen_data_only:
+        print("gen_data_only is True. skipping training and exiting.")
+        sys.exit(0)
 
     # create training artifacts
     print("creating training artifacts...")
