@@ -1,3 +1,6 @@
+import os
+os.environ["OPENBLAS_NUM_THREADS"] = "4"
+
 import argparse
 from data import utils
 import json
