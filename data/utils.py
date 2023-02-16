@@ -1,7 +1,6 @@
 
-import gensim
 import gensim.downloader as api
-from gensim.models import Word2Vec
+import numpy as np
 import os
 import pickle as pkl
 from sentence_transformers import SentenceTransformer
@@ -83,7 +82,7 @@ class SentenceEncoder():
             words_in_w2v_model = [word for word in words if word in self.encoder_w2v]
             if not words_in_w2v_model:
                 return torch.Tensor([0] * SENTENCE_ENCODER_DIM[self.encoder_name])
-            return sum([torch.Tensor(self.encoder_w2v[word]) for word in words_in_w2v_model])
+            return sum([torch.Tensor(np.copy(self.encoder_w2v[word])) for word in words_in_w2v_model])
         elif self.encoder_name == "tfidf":
             print("not implemented!")
             sys.exit()
