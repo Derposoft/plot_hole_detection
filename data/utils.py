@@ -144,7 +144,7 @@ def read_data(
     :param batch_size: batch_size for output dataloaders
     :param data_path: location of data
     :param cache_path: location of cached data
-    :param encoder: SentenceTransformer encoder to use to encode story sentences
+    :param encoder: name of encoder to use to encode story sentences
     :param n_stories: number of stories to use
     :param n_synth: number of synthetic datapoints to create per story
     :returns: tuple of (continuity_dataloader, unresolved_dataloader) dataloaders
@@ -225,7 +225,7 @@ def read_data(
 
     # encode all data file sentences using encoder
     print("encoding stories...")
-    encoder = SentenceEncoder()
+    encoder = SentenceEncoder(encoder_name=encoder)
     continuity_data = encode_stories(encoder, continuity_data)
     unresolved_data = encode_stories(encoder, unresolved_data)
 
