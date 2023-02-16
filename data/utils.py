@@ -81,7 +81,9 @@ class SentenceEncoder():
         if self.encoder_name == "word2vec":
             words = sentence.split()
             words_in_w2v_model = [word for word in words if word in self.encoder_w2v]
-            return torch.sum(torch.Tensor([self.encoder_w2v[word] for word in words_in_w2v_model]))
+            if not words_in_w2v_model:
+                return torch.Tensor([0] * SENTENCE_ENCODER_DIM[self.encoder_name])
+            return sum([torch.Tensor(self.encoder_w2v[word]) for word in words_in_w2v_model])
         elif self.encoder_name == "tfidf":
             print("not implemented!")
             sys.exit()
