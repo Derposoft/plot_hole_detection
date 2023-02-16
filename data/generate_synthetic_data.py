@@ -167,7 +167,7 @@ def generate_kgs(data_files_path, data_files=None):
 
     # 2. run commands to create knowledge graph outputs
     os.chdir(kg_path)
-    c_kg = os.system(f"python knowledge_graph.py nltk") # "optimized stanford" setting in future?
+    c_kg = os.system(f"python knowledge_graph.py --stanford --optimized") # "optimized stanford" setting in future?
     c_re = os.system(f"python relation_extractor.py")
     c_csv = os.system(f"python create_structured_csv.py")
     assert not (c_kg or c_re or c_csv), "knowledge graph creation failed; refer to above errors"
