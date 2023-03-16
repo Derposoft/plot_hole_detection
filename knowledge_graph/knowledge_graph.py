@@ -17,7 +17,7 @@ nltk.download("words", quiet=True)
 nltk.download("punkt", quiet=True)
 spacy_nlp = en_core_web_sm.load()
 stanford_core_nlp_path="./stanford-corenlp-4.5.1"
-nlp = StanfordCoreNLP(stanford_core_nlp_path, quiet=True)
+nlp = StanfordCoreNLP(stanford_core_nlp_path, quiet=True, threads=1)
 
 
 def stanford_ner(doc, stanford_ner_path="./stanford-ner-2018-10-16"):
@@ -49,50 +49,31 @@ def spacy_ner(doc):
     return ner_dict
 
 
-def replace_coreferences(corefs, doc, named_entities):
+def replace_coreferences(corefs: dict, doc, named_entities):
     """This function is an absolute mess."""
+    #print(corefs)
     corefs = corefs["corefs"]
 
-    # replace all corefs in i th coref list with this
-    replace_coref_with = []
-    
-    # Key is sentence number; value is list of tuples of (reference_dict, coreference number)
-    sentence_wise_replacements = defaultdict(list)
-
+    sentenceidx2corefs = defaultdict(list)
     sentences = nltk.sent_tokenize(doc)
-    for index, coreferences in enumerate(corefs.values()):    # corefs : {[{}]} => coreferences : [{}]
-        # Find which coreference to replace each coreference with. By default, replace with first reference.
-        replace_with = coreferences[0]
-        for reference in coreferences:      # reference : {}
-            if reference["text"] in named_entities.keys() or reference["text"][reference["headIndex"]-reference["startIndex"]] in named_entities.keys():
-                replace_with = reference
-            sentence_wise_replacements[reference["sentNum"]-1].append((reference,index))
-        replace_coref_with.append(replace_with["text"])  
+    for index, coreferences in enumerate(corefs.values()):
+        for reference in coreferences:
+            sentenceidx2corefs[reference["sentNum"]-1].append(reference)
     
-    # sort tuples in list according to start indices for replacement 
-    sentence_wise_replacements[0].sort(key=lambda tup: tup[0]["startIndex"]) 
+    #print(sentenceidx2corefs[0], "SENTENCE REPLACEMENTS")
     
     #Carry out replacement
-    for index,sent in enumerate(sentences):
-        # Get the replacements in ith sentence
-        replacement_list = sentence_wise_replacements[index]    # replacement_list : [({},int)]
-        # Replace from last to not mess up previous replacement"s indices
-        for item in replacement_list[::-1]:                     # item : ({},int)
-            to_replace = item[0]                                # to_replace: {}
-            replace_with = replace_coref_with[item[1]]
-            replaced_sent = ""
-            words = nltk.word_tokenize(sent)
-            
-            # Add words from end till the word(s) that need(s) to be replaced
-            for i in range(len(words)-1,to_replace["endIndex"]-2,-1):
-                replaced_sent = words[i] + " "+ replaced_sent
-            
-            # Replace
-            replaced_sent = replace_with + " " + replaced_sent
-            # Copy starting sentence
-            for i in range(to_replace["startIndex"]-2,-1,-1):
-                replaced_sent = words[i] + " "+ replaced_sent
-            sentences[index] = replaced_sent
+    for index, sentence in enumerate(sentences):
+        print("Sentence that we're changing: ", sentence)
+        words = nltk.word_tokenize(sentence)
+        for coref in sentenceidx2corefs[index]:
+            words[coref["startIndex"]] = coref["text"]
+            for i in range(coref["startIndex"]+1, coref["endIndex"]):
+                words[i] = ""
+        words = [word for word in words if word != ""]
+        new_sentence = " ".join(words)
+        sentences[index] = new_sentence
+        print("New sentence:", new_sentence)
 
     result = " ".join(sentences)
     return result
@@ -100,9 +81,13 @@ def replace_coreferences(corefs, doc, named_entities):
 
 def get_coreferences(doc):
     annotated = nlp.annotate(doc, properties={
-        "annotators": "coref",
+        #"annotators": "coref",
+        #"annotators": "tokenize,ssplit,pos,lemma,ner,parse,depparse,coref,openie",
+        "annotators": "tokenize,ssplit,pos,lemma,ner,parse,depparse,coref,openie",
         "pipelineLanguage": "en"
     })
+    with open("corefs.json", "w") as f:
+        f.write(annotated)
     return json.loads(annotated)
 
 
@@ -120,17 +105,17 @@ def generate_coreferences(docs, all_named_entities):
     return processed_docs
 
 
+STANFORD_NER = False
+SPACY_NER = False
 def perform_ner(doc):
-    """
-    if args.stanford:
+    if STANFORD_NER:
         named_entities = stanford_ner(doc)
-        #stanford_ner.display(ner)
-    if args.spacy:
+    elif SPACY_NER:
         named_entities = spacy_ner(doc)
-        #spacy_ner.display(named_entities)
+    else:
+        named_entities = spacy_ner(doc)
     return named_entities
-    """
-    return stanford_ner(doc)
+
 
 def main(args):
     verbose = args.verbose
@@ -150,8 +135,10 @@ def main(args):
         docs.append(doc)
     
     # Perform NER in parallel
+    print("[kg] Starting NER")
     pool = Pool(os.cpu_count())
     all_named_entities = pool.map(perform_ner, docs)
+    print("[kg] NER complete")
     
     # Save named entities for downstream processes
     for file, named_entities in zip(files, all_named_entities):
@@ -163,8 +150,10 @@ def main(args):
             pickle.dump(named_entities, f)
 
     # Perform coreference resolution in parallel
+    print("[kg] Starting coref resolution")
     if execute_coref_resol:
         docs = generate_coreferences(docs, all_named_entities)
+    print("[kg] corefs done")
 
     for file, doc in zip(files, docs):
         op_filename = (
@@ -186,5 +175,10 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--optimized", action="store_true")
     args = parser.parse_args()
+
+    if args.stanford:
+        STANFORD_NER = True
+    if args.spacy:
+        SPACY_NER = True
 
     main(args)

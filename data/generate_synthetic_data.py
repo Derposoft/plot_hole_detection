@@ -70,13 +70,13 @@ def generate_continuity_errors(document: str, n: int) -> Tuple[List[str], List[i
     :param n: number of samples to generate.
     :returns: (X, y) tuple for X=list of synthetic documents, y=list of labels
     """
-    sentences =  [x.strip() for x in document.split(".") if x != ""]
+    sentences = nltk.sent_tokenize(document)  # [x.strip() for x in document.split(".") if x != ""] # we should not be rolling our own here
     samples = np.random.choice(range(len(sentences)), min(n, len(sentences)), replace=False)
     X = []
     for sample in samples:
         X.append(deepcopy(sentences))
         X[-1][sample] = negater(X[-1][sample])
-    X = [".\n".join(x) for x in X]
+    X = ["\n".join(x) for x in X]
     y = samples
     return X, y
 

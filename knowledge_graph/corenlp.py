@@ -110,12 +110,14 @@ class StanfordCoreNLP:
 
             # Silence
             with open(os.devnull, 'w') as null_file:
+                print("starting server.")
                 out_file = None
                 if self.quiet:
                     out_file = null_file
 
                 self.p = subprocess.Popen(args, shell=True, stdout=out_file, stderr=subprocess.STDOUT)
                 logging.info('Server shell PID: {}'.format(self.p.pid))
+                print("the server is starterino")
 
             self.url = 'http://localhost:' + str(self.port)
 

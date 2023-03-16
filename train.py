@@ -103,7 +103,7 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gen_data_only", default=False, type=bool, help="only generate data, no training")
+    parser.add_argument("--gen_data_only", action="store_true", help="only generate data, no training")
     parser.add_argument("--n_stories", default=1000, type=int, help="number of stories to use (for both test and train)")
     parser.add_argument("--n_synth", default=1, type=int, help="number of synthetic datapoints to use per story")
     parser.add_argument("--train_ratio", default=0.5, type=float, help="train ratio")
