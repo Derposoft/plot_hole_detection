@@ -32,7 +32,6 @@ model = SentenceTransformer(SENTENCE_TRANFORMER_MODEL).to(device)
 
 def make_kg(doc_pipeline_output):
     # Graph object representing {u: {v1: rel1, v2: rel2, ...}}
-    print("[kg] parsing openie output")
     node2idx = {}
     edge_list = []
     edge_feat = []
@@ -46,7 +45,6 @@ def make_kg(doc_pipeline_output):
                 node2idx[s] = len(node2idx)
             edge_list.append([node2idx[s], node2idx[o]])
             edge_feat.append(r)
-    print("[kg] done parsing openie output")
     
     # Encode node_feats, edge_list, edge_feats in required format for PyG
     node_feat = torch.eye(KG_NODE_DIM)[list(range(len(node2idx)))]
@@ -66,13 +64,10 @@ def perform_triple_extraction_pipeline(doc):
 def generate_kgs(docs):
     try:
         # Create KGs in parallel
-        print("[kg] performing triple extraction")
         pool = Pool(os.cpu_count())
         all_triples_info = pool.map(perform_triple_extraction_pipeline, docs)
         nlp.close()
-        print("[kg] triple extraction complete. building kgs")
         node_feats, edge_lists, edge_feats = list(zip(pool.map(make_kg, all_triples_info)))
-        print("[kg] kg creation done")
         return node_feats, edge_lists, edge_feats
     except:
         nlp.close()
@@ -89,8 +84,16 @@ if __name__ == "__main__":
         type=str,
     )
     args = parser.parse_args()
-    node_feats, edge_list, edge_feats = generate_kgs(args.input_dir)
-    print("[kg] writing to pkl...")
+
+    # Get documents and run kg generator
+    files = glob.glob(os.path.join(args.input_dir,  "*.txt"))
+    docs = []
+    for file in files:
+        with open(file,"r") as f:
+            lines = f.read().splitlines()
+        doc = " ".join(lines)
+        docs.append(doc)
+    node_feats, edge_list, edge_feats = generate_kgs(docs)
+    
     with open("knowledge_graphs.pkl", "wb") as f:
         pickle.dump((node_feats, edge_list, edge_feats), f)
-    print("[kg] done!")
