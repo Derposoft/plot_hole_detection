@@ -17,12 +17,7 @@ import sys
 import time
 
 import psutil
-
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
-
+from urllib.parse import urlparse
 import requests
 
 
@@ -102,6 +97,7 @@ class StanfordCoreNLP:
                 '-cp', class_path, java_class,
                 '-port', str(self.port),
                 '-threads', str(threads),
+                '-timeout', str(timeout),
             ]
 
             args = ' '.join(args)
@@ -117,7 +113,6 @@ class StanfordCoreNLP:
 
                 self.p = subprocess.Popen(args, shell=True, stdout=out_file, stderr=subprocess.STDOUT)
                 logging.info('Server shell PID: {}'.format(self.p.pid))
-                print("the server is starterino")
 
             self.url = 'http://localhost:' + str(self.port)
 

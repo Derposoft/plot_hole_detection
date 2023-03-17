@@ -1,4 +1,3 @@
-
 import gensim.downloader as api
 import numpy as np
 import os
@@ -8,6 +7,7 @@ import sys
 import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader, default_collate
+import knowledge_graph.create_knowledge_graph as kg_utils
 from typing import List
 from tqdm import tqdm
 ospj = os.path.join
@@ -96,8 +96,10 @@ class StoryDataset(Dataset):
         self.X = X
         self.y = y
         self.kgs = kgs
+
     def __len__(self):
         return len(self.y)
+
     def __getitem__(self, idx):
         import knowledge_graph.gnn_data_utils as kgutils
         kg_node_dim, kg_edge_dim = kgutils.KG_NODE_DIM, kgutils.KG_EDGE_DIM
@@ -111,6 +113,8 @@ class StoryDataset(Dataset):
         if self.kgs and len(self.kgs[idx]["node_feats"] > 0):
             kg = self.kgs[idx]
         return self.X[idx], self.y[idx], kg
+
+
 def custom_dataloader_collate(data):
     X, y = default_collate([(x[0], x[1]) for x in data])
     kgs = [x[2] for x in data]
@@ -128,7 +132,6 @@ def create_story_dataloader(dataset, batch_size=8):
         collate_fn=custom_dataloader_collate,
         batch_size=batch_size,
     )
-
 
 
 def read_data(
@@ -218,11 +221,17 @@ def read_data(
     unresolved_kgs = []
     if get_kgs:
         print("get_kgs set to True, generating KGs for stories.")
+        """
         kgs = datagen.generate_kgs(data_path, continuity_files+unresolved_files)
         for data_file in continuity_files:
             continuity_kgs.append(kgs[data_file])
         for data_file in unresolved_files:
             unresolved_kgs.append(kgs[data_file])
+        """
+        continuity_docs = [" ".join(lines) for lines in continuity_data]
+        unresolved_docs = [" ".join(lines) for lines in unresolved_data]
+        continuity_kgs = kg_utils.generate_kgs(continuity_docs)
+        unresolved_kgs = kg_utils.generate_kgs(unresolved_docs)
 
     # encode all data file sentences using encoder
     print("encoding stories...")

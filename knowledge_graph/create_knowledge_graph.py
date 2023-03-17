@@ -26,11 +26,13 @@ nlp = StanfordCoreNLP(stanford_core_nlp_path, quiet=True, threads=1, timeout=600
 SENTENCE_TRANFORMER_MODEL = 'all-MiniLM-L6-v2'
 KG_NODE_DIM = 100
 KG_EDGE_DIM = utils.SENTENCE_ENCODER_DIM[SENTENCE_TRANFORMER_MODEL]
-model = SentenceTransformer(SENTENCE_TRANFORMER_MODEL)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = SentenceTransformer(SENTENCE_TRANFORMER_MODEL).to(device)
 
 
 def make_kg(doc_pipeline_output):
     # Graph object representing {u: {v1: rel1, v2: rel2, ...}}
+    print("[kg] parsing openie output")
     node2idx = {}
     edge_list = []
     edge_feat = []
@@ -43,43 +45,32 @@ def make_kg(doc_pipeline_output):
             if s not in node2idx:
                 node2idx[s] = len(node2idx)
             edge_list.append([node2idx[s], node2idx[o]])
-            edge_feat.append(model.encode(r))
+            edge_feat.append(r)
+    print("[kg] done parsing openie output")
     
     # Encode node_feats, edge_list, edge_feats in required format for PyG
     node_feat = torch.eye(KG_NODE_DIM)[list(range(len(node2idx)))]
     edge_list = torch.Tensor(edge_list).t().contiguous()
-    edge_feat = torch.Tensor(edge_feat)
+    edge_feat = model.encode(edge_feat, convert_to_tensor=True)
     return node_feat, edge_list, edge_feat
 
 
 def perform_triple_extraction_pipeline(doc):
-    print("[kg] starting annotation")
     annotated = nlp.annotate(doc, properties={
         "annotators": "tokenize,ssplit,pos,lemma,ner,parse,depparse,coref,openie",
         "pipelineLanguage": "en"
     })
-    print("[kg] annotation done")
-    annotated_json = json.loads(annotated)
-    print("[kg] annotation json parsed")
-    return annotated_json
+    return json.loads(annotated)
 
 
-def generate_kgs(input_dir):
+def generate_kgs(docs):
     try:
-        # Collect docs
-        files = glob.glob(os.path.join(input_dir,  "*.txt"))
-        docs = []
-        for file in files:
-            with open(file,"r") as f:
-                lines = f.read().splitlines()
-            doc = " ".join(lines)
-            docs.append(doc)
-        
         # Create KGs in parallel
-        print("[kg] creating kgs")
+        print("[kg] performing triple extraction")
         pool = Pool(os.cpu_count())
         all_triples_info = pool.map(perform_triple_extraction_pipeline, docs)
         nlp.close()
+        print("[kg] triple extraction complete. building kgs")
         node_feats, edge_lists, edge_feats = list(zip(pool.map(make_kg, all_triples_info)))
         print("[kg] kg creation done")
         return node_feats, edge_lists, edge_feats
