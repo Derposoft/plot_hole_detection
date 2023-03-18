@@ -1,8 +1,0 @@
-*.swp
-stanford-corenlp-full-2018-10-05/*
-*.p
-./data/output/ner/*.pickle
-./data/output/kg/*.txt
-./data/output/kg/*.csv
-./data/output/caches/*
-

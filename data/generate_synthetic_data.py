@@ -1,13 +1,10 @@
 from copy import deepcopy
-from knowledge_graph.gnn_data_utils import process_extraction_results
 import nltk
 import numpy as np
 import os
 from pathlib import Path
-import shutil
 from sys import platform
 from typing import List, Tuple
-import data.utils as utils
 
 
 nltk.download("averaged_perceptron_tagger", quiet=True)
@@ -142,42 +139,6 @@ def generate_synthetic_data(n_stories=10, n_synth=1, train_ratio=0.5):
                 write_synthetic_datapoint_to_file(
                     X=X, y=y, path=unresolved_path, plot_hole_type="unresolved"
                 )
-
-
-def generate_kgs(data_files_path, data_files=None):
-    # 0. ensure knowledge_graph/data folders are clean
-    kg_path = "./knowledge_graph"
-    folders_to_cleanup = [
-        f"{kg_path}/data/input/",
-        f"{kg_path}/data/output/kg/",
-        f"{kg_path}/data/output/ner",
-        f"{kg_path}/data/result/"
-    ]
-    for folder in folders_to_cleanup:
-        utils.clean_dir(folder)
-
-    # 1. copy all data_files to knowledge_graph/data/input/
-    if not data_files:
-        for data_file in osl(data_files_path):
-            if not data_file.endswith(".txt"): continue
-            shutil.copy(ospj(data_files_path, data_file), ospj(f"{kg_path}/data/input/", data_file))
-    else:
-        for data_file in data_files:
-            shutil.copy(ospj(data_files_path, data_file), ospj(f"{kg_path}/data/input/", data_file))
-
-    # 2. run commands to create knowledge graph outputs
-    os.chdir(kg_path)
-    c_kg = os.system(f"python knowledge_graph.py --stanford --optimized") # "optimized stanford" setting in future?
-    c_re = os.system(f"python relation_extractor.py")
-    c_csv = os.system(f"python create_structured_csv.py")
-    assert not (c_kg or c_re or c_csv), "knowledge graph creation failed; refer to above errors"
-    os.chdir("..")
-
-    # 3. run knowledge graph tensor generation code
-    kgs = process_extraction_results()
-
-    # 4. return generated knowledge graphs
-    return kgs
 
 
 if __name__ == "__main__":
