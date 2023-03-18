@@ -20,7 +20,7 @@ nltk.download("maxent_ne_chunker", quiet=True)
 nltk.download("words", quiet=True)
 nltk.download("punkt", quiet=True)
 spacy_nlp = en_core_web_sm.load()
-stanford_core_nlp_path="./stanford-corenlp-4.5.1"
+stanford_core_nlp_path = "./stanford-corenlp"
 nlp = None
 
 
