@@ -1,7 +1,7 @@
 # _*_coding:utf-8_*_
 
 """
-Multithreaded version of stanfordcorenlp python client that
+Multithreaded version of stanfordcorenlp python client that we use for speed.
 """
 
 from __future__ import print_function

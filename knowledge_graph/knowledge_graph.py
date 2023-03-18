@@ -9,7 +9,7 @@ from sys import platform
 
 #from stanfordcorenlp import StanfordCoreNLP
 import en_core_web_sm
-from corenlp import StanfordCoreNLP # we need to use our own library for server parallelism
+from knowledge_graph.corenlp import StanfordCoreNLP # we need to use our own library for server parallelism
 import nltk
 
 nltk.download("maxent_ne_chunker", quiet=True)
@@ -51,7 +51,6 @@ def spacy_ner(doc):
 
 def replace_coreferences(corefs: dict, doc, named_entities):
     """This function is an absolute mess."""
-    #print(corefs)
     corefs = corefs["corefs"]
 
     sentenceidx2corefs = defaultdict(list)

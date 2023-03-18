@@ -2,6 +2,13 @@ import torch.nn as nn
 from torch_geometric.nn import GATv2Conv
 
 
+SENTENCE_ENCODER_DIM = {
+    "all-MiniLM-L6-v2": 384,
+    "paraphrase-albert-small-v2": 768,
+    "word2vec": 300,
+}
+
+
 def get_model_size(model: nn.Module):
     return sum([x.numel() for x in model.parameters()])
 

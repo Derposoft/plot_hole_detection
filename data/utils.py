@@ -8,31 +8,13 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader, default_collate
 import knowledge_graph.create_knowledge_graph as kg_utils
+from models.model_utils import SENTENCE_ENCODER_DIM
 from typing import List
 from tqdm import tqdm
+from clean_data import clean_dir
 ospj = os.path.join
 osl = os.listdir
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
-
-SENTENCE_ENCODER_DIM = {
-    "all-MiniLM-L6-v2": 384,
-    "paraphrase-albert-small-v2": 768,
-    "word2vec": 300,
-}
-
-
-def clean_dir(dir, filetype=""):
-    """
-    :param dir: directory to clean
-    :param filetype: filetype to clean from that directory. if empty, cleans
-    all files EXCEPT for .gitignore.
-    :returns: None. this is a data/directory cleaning utility function that
-    just deletes all filetype-type files from the given dir.
-    """
-    for file in osl(dir):
-        if filetype != "" and file.endswith(filetype) or filetype == "" and file != ".gitignore":
-            os.remove(ospj(dir, file))
 
 
 def encode_stories(encoder, stories: List[List[str]]):
