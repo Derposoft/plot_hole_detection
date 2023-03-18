@@ -24,13 +24,13 @@ stanford_core_nlp_path="./stanford-corenlp-4.5.1"
 nlp = None
 
 
-os.environ["TOKENIZERS_PARALLELISM"] = "true"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 CAP_TOT_EDGES = 100
 SENTENCE_TRANFORMER_MODEL = 'all-MiniLM-L6-v2'
 KG_NODE_DIM = 100
 KG_EDGE_DIM = SENTENCE_ENCODER_DIM[SENTENCE_TRANFORMER_MODEL]
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model = SentenceTransformer(SENTENCE_TRANFORMER_MODEL).to(device)
+model = None
 
 
 def perform_triple_extraction_pipeline(doc):
@@ -70,17 +70,29 @@ def make_kg(doc_pipeline_output):
         "edge_feats": edge_feat,
     }
 
-def generate_kgs(docs):
+
+def start_pipeline():
     global nlp
-    nlp = StanfordCoreNLP(stanford_core_nlp_path, quiet=True, threads=1, timeout=60000)
+    global model
+    if not nlp:
+        nlp = StanfordCoreNLP(stanford_core_nlp_path, quiet=True, threads=1, timeout=60000)
+    if not model:
+        model = SentenceTransformer(SENTENCE_TRANFORMER_MODEL).to(device)
+def stop_pipeline():
+    global nlp
+    if nlp:
+        nlp.close()
+
+
+def generate_kgs(docs):
     try:
+        start_pipeline()
         # Create KGs in parallel
         pool = Pool(os.cpu_count())
         all_triples_info = pool.map(perform_triple_extraction_pipeline, docs)
-        nlp.close()
         return pool.map(make_kg, all_triples_info)
     except:
-        nlp.close()
+        stop_pipeline()
         traceback.print_exc()
         sys.exit()
 
@@ -103,7 +115,7 @@ if __name__ == "__main__":
             lines = f.read().splitlines()
         doc = " ".join(lines)
         docs.append(doc)
-    node_feats, edge_list, edge_feats = generate_kgs(docs)
+    kgs = generate_kgs(docs)
     
     with open("knowledge_graphs.pkl", "wb") as f:
-        pickle.dump((node_feats, edge_list, edge_feats), f)
+        pickle.dump(kgs, f)
