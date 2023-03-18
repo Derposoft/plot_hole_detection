@@ -41,7 +41,6 @@ def perform_triple_extraction_pipeline(doc):
     return json.loads(annotated)
 
 
-
 def make_kg(doc_pipeline_output):
     # Graph object representing {u: {v1: rel1, v2: rel2, ...}}
     node2idx = {}
@@ -62,7 +61,7 @@ def make_kg(doc_pipeline_output):
     
     # Encode node_feats, edge_list, edge_feats in required format for PyG
     node_feat = torch.eye(KG_NODE_DIM)[np.array(list(range(len(node2idx)))) % KG_NODE_DIM]
-    edge_list = torch.Tensor(edge_list).t().contiguous()
+    edge_list = torch.Tensor(edge_list).t().contiguous().long()
     edge_feat = model.encode(edge_feat, convert_to_tensor=True)
     return {
         "node_feats": node_feat,
@@ -78,6 +77,8 @@ def start_pipeline():
         nlp = StanfordCoreNLP(stanford_core_nlp_path, quiet=True, threads=1, timeout=60000)
     if not model:
         model = SentenceTransformer(SENTENCE_TRANFORMER_MODEL).to(device)
+
+
 def stop_pipeline():
     global nlp
     if nlp:

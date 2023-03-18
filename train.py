@@ -13,7 +13,7 @@ import sys
 import torch
 import torch.nn as nn
 from torch.optim import Adam
-import knowledge_graph.gnn_data_utils as kgutils
+import knowledge_graph.create_knowledge_graph as kg_utils
 from time import time
 device = "cuda" if torch.cuda.is_available() else "cpu"
 PR_THRESHOLD = None
@@ -176,6 +176,7 @@ if __name__ == "__main__":
         encoder=encoder_type,
         optimize_space=optimize_space,
     )
+    utils.kg_utils.stop_pipeline()
     print("done.")
     if gen_data_only:
         print("gen_data_only is True. skipping training and exiting.")
@@ -208,8 +209,8 @@ if __name__ == "__main__":
             hidden_dim=config["hidden_dim"],
             input_dim=utils.SENTENCE_ENCODER_DIM[encoder_type],
             use_kg=use_kg,
-            kg_node_dim=kgutils.KG_NODE_DIM,
-            kg_edge_dim=kgutils.KG_EDGE_DIM,
+            kg_node_dim=kg_utils.KG_NODE_DIM,
+            kg_edge_dim=kg_utils.KG_EDGE_DIM,
             dropout=config["dropout"],
         )
         model = model.to(device)

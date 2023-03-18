@@ -83,8 +83,7 @@ class StoryDataset(Dataset):
         return len(self.y)
 
     def __getitem__(self, idx):
-        import knowledge_graph.gnn_data_utils as kgutils
-        kg_node_dim, kg_edge_dim = kgutils.KG_NODE_DIM, kgutils.KG_EDGE_DIM
+        kg_node_dim, kg_edge_dim = kg_utils.KG_NODE_DIM, kg_utils.KG_EDGE_DIM
         if not self.kgs: kg_node_dim, kg_edge_dim = 1, 1
         n_nodes, n_edges = 1, 1
         kg = {

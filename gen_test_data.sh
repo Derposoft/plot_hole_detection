@@ -1,1 +1,1 @@
-python train.py --gen_data_only --n_stories 1 --n_synth 1 --model_type continuity_bert_kg
+python train.py --n_stories 1 --n_synth 1 --model_type continuity_bert_kg
