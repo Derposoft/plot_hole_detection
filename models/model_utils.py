@@ -14,7 +14,11 @@ def get_model_size(model: nn.Module):
 
 
 def initialize_gnn(kg_node_dim, kg_edge_dim, n_layers):
-    return nn.ModuleList([
-        GATv2Conv(in_channels=kg_node_dim, out_channels=kg_node_dim, edge_dim=kg_edge_dim)
-        for _ in range(n_layers)
-    ])
+    return nn.ModuleList(
+        [
+            GATv2Conv(
+                in_channels=kg_node_dim, out_channels=kg_node_dim, edge_dim=kg_edge_dim
+            )
+            for _ in range(n_layers)
+        ]
+    )

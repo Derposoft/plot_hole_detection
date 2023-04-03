@@ -12,6 +12,7 @@ from models.model_utils import SENTENCE_ENCODER_DIM
 from typing import List
 from tqdm import tqdm
 from clean_data import clean_dir
+
 ospj = os.path.join
 osl = os.listdir
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -27,20 +28,22 @@ def encode_stories(encoder, stories: List[List[str]]):
     """
     output = []
     for story in tqdm(stories):
-        output.append(torch.stack([torch.Tensor(encoder.encode(sentence)) for sentence in story]))
+        output.append(
+            torch.stack([torch.Tensor(encoder.encode(sentence)) for sentence in story])
+        )
     return output
 
 
-class SentenceEncoder():
+class SentenceEncoder:
     def __init__(self, encoder_name="all-MiniLM-L6-v2"):
         """
         :param encoder_name: the name of the encoder model to use.
             supported encoders can be found in SENTENCE_ENCODER_DIM
         """
         # ensure that encoder is supported
-        assert encoder_name in SENTENCE_ENCODER_DIM, (
-            f"encoder name must be one of {list(SENTENCE_ENCODER_DIM.keys())}"
-        )
+        assert (
+            encoder_name in SENTENCE_ENCODER_DIM
+        ), f"encoder name must be one of {list(SENTENCE_ENCODER_DIM.keys())}"
         self.encoder_name = encoder_name
         self.encoder_dim = SENTENCE_ENCODER_DIM[self.encoder_name]
 
@@ -51,20 +54,27 @@ class SentenceEncoder():
             print("not implemented!")
             sys.exit()
         else:
-            self.encoder_sentencetransformer = SentenceTransformer(f"sentence-transformers/{encoder_name}")
+            self.encoder_sentencetransformer = SentenceTransformer(
+                f"sentence-transformers/{encoder_name}"
+            )
             self.encoder_sentencetransformer.eval().to(device)
 
     def encode(self, sentence: str):
         """
         :param sentences: n sentence string(s) to encode
-        :returns: encoded sentence in the form of a 
+        :returns: encoded sentence in the form of a
         """
         if self.encoder_name == "word2vec":
             words = sentence.split()
             words_in_w2v_model = [word for word in words if word in self.encoder_w2v]
             if not words_in_w2v_model:
                 return torch.Tensor([0] * SENTENCE_ENCODER_DIM[self.encoder_name])
-            return sum([torch.Tensor(np.copy(self.encoder_w2v[word])) for word in words_in_w2v_model])
+            return sum(
+                [
+                    torch.Tensor(np.copy(self.encoder_w2v[word]))
+                    for word in words_in_w2v_model
+                ]
+            )
         elif self.encoder_name == "tfidf":
             print("not implemented!")
             sys.exit()
@@ -84,12 +94,13 @@ class StoryDataset(Dataset):
 
     def __getitem__(self, idx):
         kg_node_dim, kg_edge_dim = kg_utils.KG_NODE_DIM, kg_utils.KG_EDGE_DIM
-        if not self.kgs: kg_node_dim, kg_edge_dim = 1, 1
+        if not self.kgs:
+            kg_node_dim, kg_edge_dim = 1, 1
         n_nodes, n_edges = 1, 1
         kg = {
             "node_feats": torch.zeros([n_nodes, kg_node_dim]),
             "edge_indices": torch.zeros((2, 1)).long(),
-            "edge_feats": torch.zeros([n_edges, kg_edge_dim])
+            "edge_feats": torch.zeros([n_edges, kg_edge_dim]),
         }
         if self.kgs and len(self.kgs[idx]["node_feats"] > 0):
             kg = self.kgs[idx]
@@ -136,7 +147,7 @@ def read_data(
 
     first check to see if cached story encodings exist for this n_stories choice at
     cache_path. otherwise:
-    1. parses data files at data_path; if num files in data_path < n_stories*2, 
+    1. parses data files at data_path; if num files in data_path < n_stories*2,
        generate new synthetic data
     2. encoding each story by sentence
     2.5. generate kgs for each story
@@ -158,12 +169,15 @@ def read_data(
         continuity_dataloader = create_story_dataloader(continuity_dataset, batch_size)
         unresolved_dataloader = create_story_dataloader(unresolved_dataset, batch_size)
         return continuity_dataloader, unresolved_dataloader
-    
+
     # ensure enough synthetic data is available, otherwise generate more
     import data.generate_synthetic_data as datagen
+
     data_files = [x for x in osl(data_path) if x.endswith(".txt")]
-    if len(data_files) < n_stories*n_synth:
-        print(f"{n_stories*n_synth} datapoints necessary but only {len(data_files)//2} exist. regenerating synthetic data.")
+    if len(data_files) < n_stories * n_synth:
+        print(
+            f"{n_stories*n_synth} datapoints necessary but only {len(data_files)//2} exist. regenerating synthetic data."
+        )
         datagen.generate_synthetic_data(n_stories, n_synth)
         data_files = [x for x in osl(data_path) if x.endswith(".txt")]
 
@@ -188,7 +202,9 @@ def read_data(
                 unresolved_labels.append(float(label))
 
     # cut returned data down to requested dataset size
-    def first_n(data, n): return data[:min(len(data), n)]
+    def first_n(data, n):
+        return data[: min(len(data), n)]
+
     n = n_stories * n_synth
     continuity_files = first_n(continuity_files, n)
     continuity_data = first_n(continuity_data, n)
@@ -238,8 +254,12 @@ def read_data(
     unresolved_labels = torch.FloatTensor(unresolved_labels)
 
     # save encoded stories into cache
-    continuity_dataset = StoryDataset(continuity_data, continuity_labels, continuity_kgs)
-    unresolved_dataset = StoryDataset(unresolved_data, unresolved_labels, unresolved_kgs)
+    continuity_dataset = StoryDataset(
+        continuity_data, continuity_labels, continuity_kgs
+    )
+    unresolved_dataset = StoryDataset(
+        unresolved_data, unresolved_labels, unresolved_kgs
+    )
     with open(ospj(cache_path, cache_file), "wb") as f:
         pkl.dump((continuity_dataset, unresolved_dataset), f)
 

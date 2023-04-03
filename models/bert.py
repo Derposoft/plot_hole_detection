@@ -6,14 +6,16 @@ import torch
 import torch.nn as nn
 from torch_geometric.nn import GATv2Conv, aggr
 import models.model_utils as utils
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-class ContinuityBERT(nn.Module): #ContinuityTransformer
+class ContinuityBERT(nn.Module):  # ContinuityTransformer
     """
     baseline model which finds Continuity Errors in plots --
     i.e., which sentences are plot holes and which ones are not.
     """
+
     def __init__(
         self,
         n_heads=16,
@@ -28,7 +30,7 @@ class ContinuityBERT(nn.Module): #ContinuityTransformer
     ):
         nn.Module.__init__(self)
         # embed into hidden dim
-        full_hidden_dim = hidden_dim*n_heads
+        full_hidden_dim = hidden_dim * n_heads
         self.embedder = nn.Linear(input_dim, full_hidden_dim)
         # decider decides which sentences are continuity errors
         self.decider = nn.TransformerEncoder(
@@ -44,13 +46,18 @@ class ContinuityBERT(nn.Module): #ContinuityTransformer
         # GAT which will use KG
         self.use_kg = use_kg
         self.gats = None
-        if use_kg: self.gats = utils.initialize_gnn(kg_node_dim, kg_edge_dim, n_gnn_layers)
+        if use_kg:
+            self.gats = utils.initialize_gnn(kg_node_dim, kg_edge_dim, n_gnn_layers)
         self.aggregator = aggr.MeanAggregation()
         # project feature space to single probability
-        self.proj = nn.Linear(full_hidden_dim if not self.use_kg else full_hidden_dim+kg_node_dim, 1)
+        self.proj = nn.Linear(
+            full_hidden_dim if not self.use_kg else full_hidden_dim + kg_node_dim, 1
+        )
         # softmax normalizes all proj outputs to find sentence
         self.softmax = nn.Softmax(dim=-1)
-        print(f"initialized continuityBERT with {utils.get_model_size(self)} parameters.")
+        print(
+            f"initialized continuityBERT with {utils.get_model_size(self)} parameters."
+        )
 
     def forward(self, x, kgs=None):
         """
@@ -95,12 +102,13 @@ class ContinuityBERT(nn.Module): #ContinuityTransformer
         return self.softmax(x)
 
 
-class UnresolvedBERT(nn.Module): #UnresolvedTransformer
+class UnresolvedBERT(nn.Module):  # UnresolvedTransformer
     """
     baseline model which finds Unresolved Storyline Errors in plots --
-    i.e., whether or not the story was cut short before the storyline 
+    i.e., whether or not the story was cut short before the storyline
     was resolved.
     """
+
     def __init__(
         self,
         n_heads=16,
@@ -115,7 +123,7 @@ class UnresolvedBERT(nn.Module): #UnresolvedTransformer
     ):
         nn.Module.__init__(self)
         # embed into hidden dim
-        full_hidden_dim = hidden_dim*n_heads
+        full_hidden_dim = hidden_dim * n_heads
         self.embedder = nn.Linear(input_dim, full_hidden_dim)
         # decider decides which sentences are most important in deciding how "incomplete" story is
         self.decider = nn.Transformer(
@@ -129,17 +137,22 @@ class UnresolvedBERT(nn.Module): #UnresolvedTransformer
         # GAT which will use KG
         self.use_kg = use_kg
         self.gats = None
-        if use_kg: self.gats = utils.initialize_gnn(kg_node_dim, kg_edge_dim, n_gnn_layers)
+        if use_kg:
+            self.gats = utils.initialize_gnn(kg_node_dim, kg_edge_dim, n_gnn_layers)
         self.aggregator = aggr.MeanAggregation()
         # project feature space to single probability
-        self.proj = nn.Linear(full_hidden_dim if not self.use_kg else full_hidden_dim+kg_node_dim, 1)
+        self.proj = nn.Linear(
+            full_hidden_dim if not self.use_kg else full_hidden_dim + kg_node_dim, 1
+        )
         # sigmoid function to determine percentage of story cut off
         self.sigmoid = nn.Sigmoid()
-        print(f"initialized unresolvedBERT with {utils.get_model_size(self)} parameters.")
-        
+        print(
+            f"initialized unresolvedBERT with {utils.get_model_size(self)} parameters."
+        )
+
     def forward(self, x, kgs=None):
         """
-        :param x: sequence of sentence encodings from a story with shape (batch_size, seq_len, input_dim) 
+        :param x: sequence of sentence encodings from a story with shape (batch_size, seq_len, input_dim)
         :param kgs: knowledge graphs LIST, of len batch_size, each represented as the following map and shapes:
             {
                 "node_feats": (n_nodes, kg_node_dim),
@@ -152,7 +165,7 @@ class UnresolvedBERT(nn.Module): #UnresolvedTransformer
 
         # embed input
         x = self.embedder(x)
-        
+
         # obtain decider output
         x = self.decider(x, torch.zeros([x.shape[0], 1, x.shape[-1]]).to(device))
 
@@ -183,12 +196,14 @@ if __name__ == "__main__":
     n_nodes = 20
     n_edges = 40
     x = torch.rand([batch_size, seq_len, 384])
-    x_kg = [{
-        "node_feats": torch.rand([n_nodes, kg_node_dim]),
-        "edge_indices": torch.randint(0, n_nodes, [2, n_edges]),
-        "edge_feats": torch.rand([n_edges, kg_edge_dim])
-    }] * batch_size
-    
+    x_kg = [
+        {
+            "node_feats": torch.rand([n_nodes, kg_node_dim]),
+            "edge_indices": torch.randint(0, n_nodes, [2, n_edges]),
+            "edge_feats": torch.rand([n_edges, kg_edge_dim]),
+        }
+    ] * batch_size
+
     """
     test ContinuityBERT model *without* KG
     """
@@ -197,13 +212,17 @@ if __name__ == "__main__":
     y_hat = continuity_model(x)
     # expected output
     y = torch.zeros((batch_size, seq_len))
-    print(f"ContinuityBERT,noKG, output shape: {y_hat.shape}, expected shape: {y.shape}")
+    print(
+        f"ContinuityBERT,noKG, output shape: {y_hat.shape}, expected shape: {y.shape}"
+    )
 
     """
     test ContinuityBERT model *with* KG
     """
     # model output
-    continuity_model = ContinuityBERT(use_kg=True, kg_node_dim=kg_node_dim, kg_edge_dim=kg_edge_dim)
+    continuity_model = ContinuityBERT(
+        use_kg=True, kg_node_dim=kg_node_dim, kg_edge_dim=kg_edge_dim
+    )
     y_hat = continuity_model(x, x_kg)
     # expected output
     y = torch.zeros((batch_size, seq_len))
@@ -217,13 +236,17 @@ if __name__ == "__main__":
     y_hat = unresolved_model(x)
     # expected output
     y = torch.zeros((batch_size))
-    print(f"UnresolvedBERT,noKG, output shape: {y_hat.shape}, expected shape: {y.shape}")
+    print(
+        f"UnresolvedBERT,noKG, output shape: {y_hat.shape}, expected shape: {y.shape}"
+    )
 
     """
     test UnresolvedBERT model *with* KG
     """
     # model output
-    unresolved_model = UnresolvedBERT(use_kg=True, kg_node_dim=kg_node_dim, kg_edge_dim=kg_edge_dim)
+    unresolved_model = UnresolvedBERT(
+        use_kg=True, kg_node_dim=kg_node_dim, kg_edge_dim=kg_edge_dim
+    )
     y_hat = unresolved_model(x, x_kg)
     # expected output
     y = torch.zeros((batch_size))

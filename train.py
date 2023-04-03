@@ -1,4 +1,5 @@
 import os
+
 os.environ["OPENBLAS_NUM_THREADS"] = "4"
 
 import argparse
@@ -15,6 +16,7 @@ import torch.nn as nn
 from torch.optim import Adam
 import knowledge_graph.create_knowledge_graph as kg_utils
 from time import time
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 PR_THRESHOLD = None
 
@@ -43,7 +45,8 @@ def test(*, model, test_data, metrics="f1", verbosity=10):
     for _, (X, y, kgs) in enumerate(test_data):
         X, y = X.to(device), y.to(device)
         for kg in kgs:
-            for k in kg: kg[k] = kg[k].to(device)
+            for k in kg:
+                kg[k] = kg[k].to(device)
         with torch.no_grad():
             y_preds.append(model(X, kgs))
         y_true.append(y)
@@ -65,7 +68,17 @@ def test(*, model, test_data, metrics="f1", verbosity=10):
     return results
 
 
-def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f1", verbosity=5):
+def train(
+    *,
+    model,
+    train_data,
+    test_data,
+    opt,
+    criterion,
+    epochs=10,
+    metrics="f1",
+    verbosity=5,
+):
     """
     :param model: the model to test
     :param train_data: train dataloader
@@ -80,7 +93,8 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
         for i, (X, y, kgs) in enumerate(train_data):
             X, y = X.to(device), y.to(device)
             for kg in kgs:
-                for k in kg: kg[k] = kg[k].to(device)
+                for k in kg:
+                    kg[k] = kg[k].to(device)
             y_hat = model(X, kgs)
             loss = criterion(y_hat, y)
             tot_loss += loss.item()
@@ -88,11 +102,15 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
             opt.step()
         tot_loss /= len(train_data)
         results = None
-        if (epoch+1) % verbosity == 0:
-            results = test(model=model, test_data=test_data, metrics=metrics, verbosity=0)
-            if metrics == "f1": best_metric = max(best_metric, results)
-            else: best_metric = min(best_metric, results)
-        if verbosity <= 0 or (epoch+1) % verbosity == 0:
+        if (epoch + 1) % verbosity == 0:
+            results = test(
+                model=model, test_data=test_data, metrics=metrics, verbosity=0
+            )
+            if metrics == "f1":
+                best_metric = max(best_metric, results)
+            else:
+                best_metric = min(best_metric, results)
+        if verbosity <= 0 or (epoch + 1) % verbosity == 0:
             results_str = f", test {metrics}: {results:0.5}" if results != None else ""
             print(
                 f"epoch {epoch+1} time: {time()-start_time:0.3}s, train loss: {tot_loss:0.4}{results_str}"
@@ -103,9 +121,21 @@ def train(*, model, train_data, test_data, opt, criterion, epochs=10, metrics="f
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--gen_data_only", action="store_true", help="only generate data, no training")
-    parser.add_argument("--n_stories", default=1000, type=int, help="number of stories to use (for both test and train)")
-    parser.add_argument("--n_synth", default=1, type=int, help="number of synthetic datapoints to use per story")
+    parser.add_argument(
+        "--gen_data_only", action="store_true", help="only generate data, no training"
+    )
+    parser.add_argument(
+        "--n_stories",
+        default=1000,
+        type=int,
+        help="number of stories to use (for both test and train)",
+    )
+    parser.add_argument(
+        "--n_synth",
+        default=1,
+        type=int,
+        help="number of synthetic datapoints to use per story",
+    )
     parser.add_argument("--train_ratio", default=0.5, type=float, help="train ratio")
     parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--n_heads", default=8, type=int)
@@ -117,15 +147,42 @@ def parse_args():
     parser.add_argument("--n_runs", default=5, type=int)
     parser.add_argument("--lr", default=1e-5, type=float)
     parser.add_argument("--pr_threshold", default=0.3, type=float)
-    parser.add_argument("--encoder_type", default="all-MiniLM-L6-v2", type=str,
-        choices=list(utils.SENTENCE_ENCODER_DIM.keys()))
-    parser.add_argument("--model_type", default="continuity_bert", type=str,
-        choices=["continuity_bert", "unresolved_bert", "continuity_bert_kg", "unresolved_bert_kg"])
+    parser.add_argument(
+        "--encoder_type",
+        default="all-MiniLM-L6-v2",
+        type=str,
+        choices=list(utils.SENTENCE_ENCODER_DIM.keys()),
+    )
+    parser.add_argument(
+        "--model_type",
+        default="continuity_bert",
+        type=str,
+        choices=[
+            "continuity_bert",
+            "unresolved_bert",
+            "continuity_bert_kg",
+            "unresolved_bert_kg",
+        ],
+    )
     parser.add_argument("--seed", default=0, type=int)
-    parser.add_argument("--optimize_space", default=False, type=bool,
-        help="if a _kg dataset is already generated, reuse it for non_kg data")
-    parser.add_argument("--verbosity", default=1, type=int, help="verbosity of output if != 0; lower is more verbose")
-    parser.add_argument("--settings_json", default="", type=str, help="JSON with optimal settings for the given model")
+    parser.add_argument(
+        "--optimize_space",
+        default=False,
+        type=bool,
+        help="if a _kg dataset is already generated, reuse it for non_kg data",
+    )
+    parser.add_argument(
+        "--verbosity",
+        default=1,
+        type=int,
+        help="verbosity of output if != 0; lower is more verbose",
+    )
+    parser.add_argument(
+        "--settings_json",
+        default="",
+        type=str,
+        help="JSON with optimal settings for the given model",
+    )
     config = parser.parse_args()
     config = vars(config)
     settings_json = config.get("settings_json", "")
@@ -195,7 +252,7 @@ if __name__ == "__main__":
         criterion = nn.MSELoss()
         metrics = "mse"
     print("done.")
-    
+
     # start runs
     print(f"training {model_type} model...")
     best_test_metrics = []
@@ -253,7 +310,9 @@ if __name__ == "__main__":
             best_test_metrics, CONTINUITY_ERROR_RANDOM_MODEL, alternative="less"
         )
     print(f"t,p-val for human<model: {t_human},{p_human}, significant: {p_human<0.05}")
-    print(f"t,p-val for random<model: {t_random},{p_random}, significant: {p_random<0.05}")
+    print(
+        f"t,p-val for random<model: {t_random},{p_random}, significant: {p_random<0.05}"
+    )
     std_dev = np.std(best_test_metrics)
     mean = np.mean(best_test_metrics)
     print(f"95% CI: {mean}+/-{std_dev*confidence_interval_95_zval}")

@@ -2,6 +2,7 @@
 
 import sys
 import os
+
 osl = os.listdir
 ospj = os.path.join
 
@@ -15,14 +16,20 @@ def clean_dir(dir, filetype=""):
     just deletes all filetype-type files from the given dir.
     """
     for file in osl(dir):
-        if filetype != "" and file.endswith(filetype) or filetype == "" and file != ".gitignore":
+        if (
+            filetype != ""
+            and file.endswith(filetype)
+            or filetype == ""
+            and file != ".gitignore"
+        ):
             os.remove(ospj(dir, file))
 
 
 if __name__ == "__main__":
     # ensure data deletion should happen
     ans = input("are you sure you want to delete all data? ([Y]/n): ")
-    if "n" in ans.lower(): sys.exit()
+    if "n" in ans.lower():
+        sys.exit()
 
     # delete data
     synth_data_folders = [

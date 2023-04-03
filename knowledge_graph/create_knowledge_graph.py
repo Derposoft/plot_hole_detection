@@ -26,7 +26,7 @@ nlp = None
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 CAP_TOT_EDGES = 100
-SENTENCE_TRANFORMER_MODEL = 'all-MiniLM-L6-v2'
+SENTENCE_TRANFORMER_MODEL = "all-MiniLM-L6-v2"
 KG_NODE_DIM = 100
 KG_EDGE_DIM = SENTENCE_ENCODER_DIM[SENTENCE_TRANFORMER_MODEL]
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -34,10 +34,13 @@ model = None
 
 
 def perform_triple_extraction_pipeline(doc):
-    annotated = nlp.annotate(doc, properties={
-        "annotators": "tokenize,ssplit,pos,lemma,ner,parse,depparse,coref,openie",
-        "pipelineLanguage": "en"
-    })
+    annotated = nlp.annotate(
+        doc,
+        properties={
+            "annotators": "tokenize,ssplit,pos,lemma,ner,parse,depparse,coref,openie",
+            "pipelineLanguage": "en",
+        },
+    )
     return json.loads(annotated)
 
 
@@ -58,9 +61,11 @@ def make_kg(doc_pipeline_output):
                 node2idx[s] = len(node2idx)
             edge_list.append([node2idx[s], node2idx[o]])
             edge_feat.append(r)
-    
+
     # Encode node_feats, edge_list, edge_feats in required format for PyG
-    node_feat = torch.eye(KG_NODE_DIM)[np.array(list(range(len(node2idx)))) % KG_NODE_DIM]
+    node_feat = torch.eye(KG_NODE_DIM)[
+        np.array(list(range(len(node2idx)))) % KG_NODE_DIM
+    ]
     edge_list = torch.Tensor(edge_list).t().contiguous().long()
     edge_feat = model.encode(edge_feat, convert_to_tensor=True)
     return {
@@ -74,7 +79,9 @@ def start_pipeline():
     global nlp
     global model
     if not nlp:
-        nlp = StanfordCoreNLP(stanford_core_nlp_path, quiet=True, threads=1, timeout=60000)
+        nlp = StanfordCoreNLP(
+            stanford_core_nlp_path, quiet=True, threads=1, timeout=60000
+        )
     if not model:
         model = SentenceTransformer(SENTENCE_TRANFORMER_MODEL).to(device)
 
@@ -109,14 +116,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Get documents and run kg generator
-    files = glob.glob(os.path.join(args.input_dir,  "*.txt"))
+    files = glob.glob(os.path.join(args.input_dir, "*.txt"))
     docs = []
     for file in files:
-        with open(file,"r") as f:
+        with open(file, "r") as f:
             lines = f.read().splitlines()
         doc = " ".join(lines)
         docs.append(doc)
     kgs = generate_kgs(docs)
-    
+
     with open("knowledge_graphs.pkl", "wb") as f:
         pickle.dump(kgs, f)

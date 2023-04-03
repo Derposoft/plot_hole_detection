@@ -1,5 +1,6 @@
 __pycache__/
-backup/
+backup*
 .idea/
 stanford-*/
 *.pdf
+
