@@ -1,6 +1,6 @@
 ## Plot Hole Detection in Fantasy Novels
 
-This code accompanies the paper "Extrauniversal Claim Verification and Fantasy Novel Plot Hole Detection" (to be provided at some point in the future).
+This code accompanies the paper [Low-Shot Learning for Fictional Claim Verification](https://arxiv.org/abs/2304.02769).
 
 
 Steps to run:
